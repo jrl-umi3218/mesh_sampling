@@ -111,7 +111,8 @@ int main(int argc, char ** argv)
     ("samples", po::value<unsigned>()->default_value(10000), "Number of points to sample")
     ("scale", po::value<float>()->default_value(1.0), "Scale factor applied to the mesh")
     ("type", po::value<std::string>()->default_value("xyz_rgb_normal"), "Type of cloud to generate (xyz, xyz_rgb, xyz_rgb_normal)")
-    ("binary", po::bool_switch()->default_value(false), "Outputs pointcloud in binary format (default: false)");
+    ("binary", po::bool_switch()->default_value(false), "Outputs pointcloud in binary format (default: false)")
+    ("convert", po::bool_switch()->default_value(false), "Convert from one mesh type to another (supported by ASSIMP)");
   // clang-format on
 
   po::positional_options_description pos;
@@ -129,6 +130,7 @@ int main(int argc, char ** argv)
     std::cout << desc << "\n";
     return !vm.count("help");
   }
+  bool convert = vm["convert"].as<bool>();
 
   std::string in_path = vm["in"].as<std::string>();
   std::string out_path = vm["out"].as<std::string>();
@@ -151,7 +153,11 @@ int main(int argc, char ** argv)
     }
   };
   check_supported(supported_cloud_type, cloud_type);
-  check_supported(supported_extensions, out_extension);
+
+  if(!convert)
+  { // we are sampling
+    check_supported(supported_extensions, out_extension);
+  }
 
   // Generate pointcloud
   // ASSIMPScene loader should be used and kept in scope for as long as the mesh
@@ -176,21 +182,28 @@ int main(int argc, char ** argv)
     return -1;
   }
 
-  if(cloud_type == "xyz")
+  if(convert)
   {
-    create_cloud<pcl::PointXYZ>(mesh->scene(), N, out_p, cloud_binary);
+    mesh->exportScene(out_path);
   }
-  else if(cloud_type == "xyz_rgb")
+  else
   {
-    create_cloud<pcl::PointXYZRGB>(mesh->scene(), N, out_p, cloud_binary);
-  }
-  else if(cloud_type == "xyz_normal")
-  {
-    create_cloud<pcl::PointNormal>(mesh->scene(), N, out_p, cloud_binary);
-  }
-  else if(cloud_type == "xyz_rgb_normal")
-  {
-    create_cloud<pcl::PointXYZRGBNormal>(mesh->scene(), N, out_p, cloud_binary);
+    if(cloud_type == "xyz")
+    {
+      create_cloud<pcl::PointXYZ>(mesh->scene(), N, out_p, cloud_binary);
+    }
+    else if(cloud_type == "xyz_rgb")
+    {
+      create_cloud<pcl::PointXYZRGB>(mesh->scene(), N, out_p, cloud_binary);
+    }
+    else if(cloud_type == "xyz_normal")
+    {
+      create_cloud<pcl::PointNormal>(mesh->scene(), N, out_p, cloud_binary);
+    }
+    else if(cloud_type == "xyz_rgb_normal")
+    {
+      create_cloud<pcl::PointXYZRGBNormal>(mesh->scene(), N, out_p, cloud_binary);
+    }
   }
 
   return 0;
