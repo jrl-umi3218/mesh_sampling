@@ -7,7 +7,6 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#include <sstream>
 #include <stdexcept>
 namespace bfs = boost::filesystem;
 
