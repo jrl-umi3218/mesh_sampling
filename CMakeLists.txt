@@ -13,7 +13,7 @@ include(cmake/base.cmake)
 include(cmake/eigen.cmake)
 search_for_eigen()
 
-project(${PROJECT_NAME} LANGUAGES CXX VERSION ${PROJECT_VERSION})
+project(${PROJECT_NAME} LANGUAGES C CXX VERSION ${PROJECT_VERSION})
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
 
 # Note:
