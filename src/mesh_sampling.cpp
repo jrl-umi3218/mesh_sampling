@@ -46,7 +46,7 @@ void create_cloud(const aiScene * scene, unsigned N, const bfs::path & out_path,
   else if(extension == ".stl")
   {
     pcl::ConvexHull<PointT> convex{};
-    const auto shared_cloud = boost::shared_ptr<const pcl::PointCloud<PointT>>(cloud.release());
+    const auto shared_cloud = typename pcl::PointCloud<PointT>::ConstPtr(cloud.release());
     convex.setInputCloud(shared_cloud);
     pcl::PolygonMesh mesh;
     convex.reconstruct(mesh);
