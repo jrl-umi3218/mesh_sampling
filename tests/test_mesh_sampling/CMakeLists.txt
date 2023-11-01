@@ -9,7 +9,7 @@ set(PROJECT_DEBUG_POSTFIX "_d")
 set(CXX_DISABLE_WERROR 1)
 set(CMAKE_CXX_STANDARD 11)
 
-project(${PROJECT_NAME} LANGUAGES CXX VERSION ${PROJECT_VERSION})
+project(${PROJECT_NAME} LANGUAGES C CXX VERSION ${PROJECT_VERSION})
 find_package(mesh_sampling REQUIRED)
 
 include_directories(include)
