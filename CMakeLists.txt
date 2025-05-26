@@ -7,7 +7,7 @@ set(PROJECT_VERSION 1.0.0)
 set(PROJECT_USE_CMAKE_EXPORT TRUE)
 set(PROJECT_DEBUG_POSTFIX "_d")
 set(CXX_DISABLE_WERROR 1)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 include(cmake/base.cmake)
 include(cmake/eigen.cmake)
@@ -27,7 +27,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
 # For now, manually add those to the mesh_samplingConfig.cmake script
 find_package(mesh_sampling_3rd_party_assimp REQUIRED)
 find_package(mesh_sampling_3rd_party_PCL REQUIRED)
-add_project_dependency(Boost COMPONENTS filesystem program_options REQUIRED)
+add_project_dependency(Boost COMPONENTS program_options REQUIRED)
 
 # Export scripts to find the custom PCL/assimp dependencies
 install(FILES
@@ -50,6 +50,8 @@ include(\"\$\{CMAKE_CURRENT_LIST_DIR\}/mesh_sampling_3rd_party_PCLConfig.cmake\"
 )
 
 add_subdirectory(src)
+add_subdirectory(utils)
+
 if(${BUILD_TESTING})
   add_subdirectory(tests)
 endif()
