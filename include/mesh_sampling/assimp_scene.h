@@ -1,14 +1,14 @@
 #pragma once
 
 #include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
 
 #include <assimp/Exporter.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <filesystem>
 #include <stdexcept>
-namespace bfs = boost::filesystem;
+namespace fs = std::filesystem;
 
 namespace mesh_sampling
 {
@@ -43,7 +43,7 @@ struct ASSIMPScene
    */
   void exportScene(const std::string & path, const bool binary = true)
   {
-    bfs::path out_path(path);
+    fs::path out_path(path);
     auto ext = boost::algorithm::to_lower_copy(out_path.extension().string());
     if(ext.empty())
     {
