@@ -75,19 +75,20 @@ int main(int argc, char ** argv)
   {
     if(cloud_type == "xyz")
     {
-      mesh_sampler.create_cloud<pcl::PointXYZ>(N, out_p, binary_format);
+      auto mesh = mesh_sampler.create_cloud<pcl::PointXYZ>(mesh_sampler.mesh(in_p)->scene(), N, out_p, binary_format);
+      mesh_sampler.create_convex(mesh, "/tmp/test-ch.txt");
     }
     else if(cloud_type == "xyz_rgb")
     {
-      mesh_sampler.create_cloud<pcl::PointXYZRGB>(N, out_p, binary_format);
+      mesh_sampler.create_cloud<pcl::PointXYZRGB>(mesh_sampler.mesh(in_p)->scene(), N, out_p, binary_format);
     }
     else if(cloud_type == "xyz_normal")
     {
-      mesh_sampler.create_cloud<pcl::PointNormal>(N, out_p, binary_format);
+      mesh_sampler.create_cloud<pcl::PointNormal>(mesh_sampler.mesh(in_p)->scene(), N, out_p, binary_format);
     }
     else if(cloud_type == "xyz_rgb_normal")
     {
-      mesh_sampler.create_cloud<pcl::PointXYZRGBNormal>(N, out_p, binary_format);
+      mesh_sampler.create_cloud<pcl::PointXYZRGBNormal>(mesh_sampler.mesh(in_p)->scene(), N, out_p, binary_format);
     }
   }
 
