@@ -7,7 +7,9 @@ add_library(mesh_sampling SHARED
   ../include/mesh_sampling/qhull_io.h
 )
 
-target_link_libraries(mesh_sampling PUBLIC mesh_sampling::assimp mesh_sampling::PCL)
+message(STATUS "---  ${QHULL_LIBRARY}")
+
+target_link_libraries(mesh_sampling PUBLIC mesh_sampling::assimp mesh_sampling::PCL Qhull::qhullcpp Qhull::qhull_r)
 
 target_include_directories(mesh_sampling PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include> 

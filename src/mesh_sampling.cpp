@@ -1,20 +1,25 @@
-#include <exception>
 #include <mesh_sampling/mesh_sampling.h>
 
 using namespace mesh_sampling;
 
 MeshSampling::MeshSampling(const fs::path & in_path, float scale) : scale_(scale)
 {
+  load(in_path, scale);
+}
+
+void MeshSampling::load(const fs::path & in_path, float scale)
+{
   try
   {
     if(fs::is_directory(in_path))
     {
-      for(auto const & dir_entry : std::filesystem::directory_iterator{in_path})
-        meshes_.push_back(std::make_unique<ASSIMPScene>(dir_entry.path(), scale_));
+      for(const auto & dir_entry : std::filesystem::directory_iterator{in_path})
+        meshes_.insert(
+            std::make_pair(dir_entry.path(), std::make_shared<ASSIMPScene>(dir_entry.path().string(), scale)));
     }
     else
     {
-      meshes_.push_back(std::make_unique<ASSIMPScene>(in_path, scale_));
+      meshes_.insert(std::make_pair(in_path, std::make_shared<ASSIMPScene>(in_path, scale)));
     }
   }
   catch(std::runtime_error & e)
@@ -39,6 +44,5 @@ bool MeshSampling::check_supported(const std::vector<std::string> & supported, c
 
 void MeshSampling::convertTo(const fs::path & out_path, bool binary)
 {
-    for(auto &mesh : meshes_)
-        mesh->exportScene(out_path, binary);
+  for(auto & mesh : meshes_) mesh.second->exportScene(out_path, binary);
 }

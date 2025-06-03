@@ -1,20 +1,28 @@
 
 
-#include <algorithm>
-#include <cstddef>
 #include <filesystem>
 #include <iostream>
-#include <iterator>
-#include <vector>
-#include <stdexcept>
+#include <libqhullcpp/Qhull.h>
+#include <libqhullcpp/QhullFacet.h>
+#include <libqhullcpp/QhullFacetList.h>
+#include <libqhullcpp/QhullFacetSet.h>
+#include <libqhullcpp/QhullLinkedList.h>
+#include <libqhullcpp/QhullPoint.h>
+#include <libqhullcpp/QhullUser.h>
+#include <libqhullcpp/QhullVertex.h>
+#include <libqhullcpp/QhullVertexSet.h>
+#include <map>
 #include <mesh_sampling/assimp_scene.h>
 #include <mesh_sampling/qhull_io.h>
 #include <mesh_sampling/weighted_random_sampling.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/ply_io.h>
 #include <pcl/io/vtk_lib_io.h>
+#include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/surface/convex_hull.h>
+
+using namespace orgQhull;
 
 namespace fs = std::filesystem;
 
@@ -27,55 +35,206 @@ const auto supported_extensions = std::vector<std::string>{".ply", ".pcd", ".qc"
 class MeshSampling
 {
 public:
+  MeshSampling() = default;
   MeshSampling(const fs::path & in_path, float scale = 1);
 
+  void load(const fs::path & in_path, float scale = 1);
+
   template<typename PointT>
-  void create_cloud(unsigned N, const fs::path & out_path, bool binary_mode = false);
+  pcl::PointCloud<PointT> create_cloud(const unsigned N);
+
+  template<typename PointT>
+  pcl::PointCloud<PointT> create_cloud(const aiScene * scene,
+                                       unsigned N,
+                                       const fs::path & out_path = {},
+                                       bool binary_mode = false);
+
+  template<typename PointT>
+  void create_clouds(unsigned N, const fs::path & out_path, const std::string & extension, bool binary_mode = false);
+
+  template<typename PointT>
+  void create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path);
 
   void convertTo(const fs::path & out_path, bool binary = false);
 
   bool check_supported(const std::vector<std::string> & supported, const std::string & value);
 
-  /** Get mesh at index 
-   * 
-   * \param index mesh index (default 0)
-   * @return ASSIMPScene& 
+  /** Get mesh at index
+   *
+   * \param path mesh path
+   * @return ASSIMPScene&
    */
-  inline ASSIMPScene & mesh(size_t index = 0)
+  inline ASSIMPScene * mesh(const std::string & path)
   {
-    if(index > meshes_.size())
-      throw std::out_of_range("index > meshes.size()");
+    if(meshes_.count(path) > 0) return meshes_.begin()->second.get();
 
-    return *meshes_.at(index);
+    return nullptr;
   }
 
 private:
-  std::vector<std::unique_ptr<ASSIMPScene>> meshes_;
+  std::map<std::string, std::shared_ptr<ASSIMPScene>> meshes_;
   float scale_;
 };
 
 template<typename PointT>
-void MeshSampling::create_cloud(unsigned N, const fs::path & out_path, bool binary_mode)
+void MeshSampling::create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path)
 {
-  for(const auto &mesh : meshes_)
+  if(cloud.empty())
   {
-    WeightedRandomSampling<PointT> sampler(mesh->scene());
-    auto cloud = sampler.weighted_random_sampling(N);
+    cerr << "Error: Empty point cloud." << endl;
+    return;
+  }
 
-    auto out = out_path.string();
+  std::ofstream out(out_path);
+  if(!out.is_open())
+  {
+    std::cerr << "Error: Could not open file: " << out_path << std::endl;
+    return;
+  }
+
+  // Convert PCL cloud to a flat array for Qhull input
+  std::vector<double> qhull_input;
+  for(const auto & pt : cloud)
+  {
+    qhull_input.push_back(pt.x);
+    qhull_input.push_back(pt.y);
+    qhull_input.push_back(pt.z);
+  }
+
+  // Create Qhull object
+  Qhull qhull;
+  try
+  {
+    qhull.runQhull("pcl_input", 3, cloud.size(), qhull_input.data(), "Qt"); // 3D, triangulate option
+  }
+  catch(const std::exception & e)
+  {
+    cerr << "Qhull exception: " << e.what() << endl;
+    return;
+  }
+
+  int dim = qhull.hullDimension();
+  int numfacets = qhull.facetList().count();
+  int totneighbors = numfacets * dim; // not accurate for non-simplicial facets
+  out << dim << "\n" << qhull.points().size() << " " << numfacets << " " << totneighbors / 2 << "\n";
+
+  std::vector<std::vector<double>> points;
+  for(QhullPoints::ConstIterator i = qhull.points().begin(); i != qhull.points().end(); ++i)
+  {
+    QhullPoint point = *i;
+    points.push_back(point.toStdVector());
+  }
+
+  for(const auto & point : points)
+  {
+    for(size_t i = 0; i < point.size(); ++i)
+    {
+      out << std::setw(6) << point[i] << (i < point.size() - 1 ? " " : "\n");
+    }
+  }
+
+  QhullFacetList facets = qhull.facetList();
+  std::vector<std::vector<int>> facetVertices;
+
+  QhullFacetListIterator j(facets);
+  while(j.hasNext())
+  {
+    QhullFacet f = j.next();
+    std::vector<int> vertices;
+    if(!f.isGood())
+    {
+      continue;
+    }
+    else if(!f.isTopOrient() && f.isSimplicial())
+    {
+      QhullVertexSet vs = f.vertices();
+      vertices.push_back(vs[1].point().id());
+      vertices.push_back(vs[0].point().id());
+      for(int i = 2; i < static_cast<int>(vs.size()); ++i)
+      {
+        vertices.push_back(vs[i].point().id());
+      }
+    }
+    else
+    {
+      QhullVertexSetIterator k(f.vertices());
+      while(k.hasNext())
+      {
+        QhullVertex vertex = k.next();
+        vertices.push_back(vertex.point().id());
+      }
+    }
+    facetVertices.push_back(vertices);
+  }
+
+  for(const auto & vertices : facetVertices)
+  {
+    out << vertices.size() << " ";
+    for(int v : vertices)
+    {
+      out << v << " ";
+    }
+    out << "\n";
+  }
+
+  out.close();
+  std::cout << "Convex file save to " << out_path << std::endl;
+}
+
+template<typename PointT>
+void MeshSampling::create_clouds(unsigned N, const fs::path & out_path, const std::string & extension, bool binary_mode)
+{
+  std::string files_extension;
+  std::string output_path;
+
+  if(!fs::is_directory(out_path))
+  {
+    std::cout << "[Warning] extension given in out_path is used by creat_clouds";
+    files_extension = out_path.extension();
+  }
+  else
+  {
+    files_extension = extension;
+  }
+
+  for(const auto & mesh : meshes_)
+  {
+    std::cout << out_path.string() + mesh.first + files_extension << std::endl;
+    create_cloud<PointT>(mesh.second, N, out_path.string() + mesh.first + extension, binary_mode);
+  }
+}
+
+template<typename PointT>
+pcl::PointCloud<PointT> MeshSampling::create_cloud(const unsigned N){
+  WeightedRandomSampling<PointT> sampler(meshes_.begin()->second->scene());
+  auto cloud = sampler.weighted_random_sampling(N);
+  return *cloud;
+}
+
+template<typename PointT>
+pcl::PointCloud<PointT> MeshSampling::create_cloud(const aiScene * scene,
+                                                   const unsigned N,
+                                                   const fs::path & out_path,
+                                                   bool binary_mode)
+{
+  WeightedRandomSampling<PointT> sampler(scene);
+  auto cloud = sampler.weighted_random_sampling(N);
+
+  if(!out_path.empty())
+  {
     auto extension = boost::algorithm::to_lower_copy(out_path.extension().string());
     bool success = true;
     if(extension == ".pcd")
     {
-      success = pcl::io::savePCDFile(out, *cloud, binary_mode) == 0;
+      success = pcl::io::savePCDFile(out_path, *cloud, binary_mode) == 0;
     }
     else if(extension == ".ply")
     {
-      success = pcl::io::savePLYFile(out, *cloud, binary_mode) == 0;
+      success = pcl::io::savePLYFile(out_path, *cloud, binary_mode) == 0;
     }
     else if(extension == ".qc")
     {
-      success = mesh_sampling::io::saveQhullFile(out, *cloud);
+      success = mesh_sampling::io::saveQhullFile(out_path, *cloud);
     }
     else if(extension == ".stl")
     {
@@ -114,7 +273,7 @@ void MeshSampling::create_cloud(unsigned N, const fs::path & out_path, bool bina
         }
       }
 #if PCL_VERSION_COMPARE(>=, 1, 8, 0)
-      success = pcl::io::savePolygonFileSTL(out, mesh, binary_mode);
+      success = pcl::io::savePolygonFileSTL(out_path, mesh, binary_mode);
 #else
       success = pcl::io::savePolygonFileSTL(out, mesh);
 #endif
@@ -122,15 +281,21 @@ void MeshSampling::create_cloud(unsigned N, const fs::path & out_path, bool bina
     else
     {
       std::cerr << "Output pointcloud type " << extension << " is not supported";
-      return;
+      return pcl::PointCloud<PointT>();
     }
 
     if(!success)
     {
-      std::cerr << "Saving to " << out << " failed." << std::endl;
-      return;
+      std::cerr << "Saving to " << out_path << " failed." << std::endl;
+      return pcl::PointCloud<PointT>();
+    }
+    else
+    {
+      std::cout << "Saving cloud to " << out_path << "success" << std::endl;
     }
   }
+
+  return *cloud;
 }
 
 }; // namespace mesh_sampling
