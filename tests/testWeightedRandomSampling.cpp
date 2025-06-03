@@ -30,20 +30,20 @@ BOOST_AUTO_TEST_CASE(TestWeightedRandomSampling)
   MeshSampling sampler(model_path);
 
   std::cout << "Sampling " << N << " points from " << model_path << std::endl;
-  WeightedRandomSampling<pcl::PointXYZ> sampling_xyz(sampler.mesh().scene());
+  WeightedRandomSampling<pcl::PointXYZ> sampling_xyz(sampler.mesh(model_path)->scene());
   auto cloud_xyz = sampling_xyz.weighted_random_sampling(N);
   pcl::io::savePCDFileASCII("/tmp/example_xyz.pcd", *cloud_xyz);
   BOOST_REQUIRE(cloud_xyz->size() == N);
 
-  WeightedRandomSampling<pcl::PointXYZRGB> sampling_rgb(sampler.mesh().scene());
+  WeightedRandomSampling<pcl::PointXYZRGB> sampling_rgb(sampler.mesh(model_path)->scene());
   auto cloud_rgb = sampling_rgb.weighted_random_sampling(N);
   BOOST_REQUIRE(cloud_rgb->size() == N);
 
-  WeightedRandomSampling<pcl::PointNormal> sampling_normal(sampler.mesh().scene());
+  WeightedRandomSampling<pcl::PointNormal> sampling_normal(sampler.mesh(model_path)->scene());
   auto cloud_normal = sampling_normal.weighted_random_sampling(N);
   BOOST_REQUIRE(cloud_normal->size() == N);
 
-  WeightedRandomSampling<pcl::PointXYZRGBNormal> sampling_rgb_normal(sampler.mesh().scene());
+  WeightedRandomSampling<pcl::PointXYZRGBNormal> sampling_rgb_normal(sampler.mesh(model_path)->scene());
   auto cloud_rgb_normal = sampling_rgb_normal.weighted_random_sampling(N);
   BOOST_REQUIRE(cloud_rgb_normal->size() == N);
 }
