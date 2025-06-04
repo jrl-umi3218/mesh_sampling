@@ -1,4 +1,4 @@
-
+#pragma once
 
 #include <filesystem>
 #include <iostream>
@@ -38,26 +38,85 @@ public:
   MeshSampling() = default;
   MeshSampling(const fs::path & in_path, float scale = 1);
 
+  /**
+   * @brief Load mesh from full path or directory
+   *
+   * @param in_path path or directory
+   * @param scale scaling factor (default: 1)
+   */
   void load(const fs::path & in_path, float scale = 1);
 
+  /**
+   * @brief Create a cloud
+   *
+   * @tparam PointT
+   * @param N number of sampling points (default: 2000)
+   * @return pcl::PointCloud<PointT>
+   */
   template<typename PointT>
-  pcl::PointCloud<PointT> create_cloud(const unsigned N);
+  pcl::PointCloud<PointT> cloud(const unsigned N = 2000);
 
+  /**
+   * @brief Create and save a pointcloud
+   *
+   * @tparam PointT
+   * @param scene ASSIMPScene
+   * @param N number sampling points
+   * @param out_path if empty or directory, file is not saved (default: {})
+   * @param binary_mode is binary (default: false)
+   * @return pcl::PointCloud<PointT>
+   */
   template<typename PointT>
   pcl::PointCloud<PointT> create_cloud(const aiScene * scene,
                                        unsigned N,
                                        const fs::path & out_path = {},
                                        bool binary_mode = false);
 
+  /**
+   * @brief Create and save pointclouds, to be used when importing meshes from a directory. If out_path is empty clouds
+   * are not saved
+   *
+   * @tparam PointT
+   * @param N number of sampling points
+   * @param out_path directory to save the clouds (default: {})
+   * @param extension saving extension (default: ".qc")
+   * @param binary_mode is binary mnode (default: false)
+   */
   template<typename PointT>
-  void create_clouds(unsigned N, const fs::path & out_path, const std::string & extension, bool binary_mode = false);
+  std::map<std::string, pcl::PointCloud<PointT>> create_clouds(unsigned N,
+                                                               const fs::path & out_path = {},
+                                                               const std::string & extension = ".qc",
+                                                               bool binary_mode = false);
 
+  /**
+   * @brief Create a convex object using qhull library and save it to a file
+   *
+   * @tparam PointT
+   * @param cloud PCL point cloud
+   * @param out_path output directory
+   */
   template<typename PointT>
   void create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path);
 
+  template<typename PointT>
+  void create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds, const fs::path & out_path);
+
+  /**
+   * @brief Export all meshes to a file in a format support by ASSIMP
+   *
+   * @param out_path Export path
+   * @param binary is binary (defaukt:false)
+   */
   void convertTo(const fs::path & out_path, bool binary = false);
 
-  bool check_supported(const std::vector<std::string> & supported, const std::string & value);
+  /**
+   * @brief Check supported type
+   *
+   * @param type type to check
+   * @param supported list of supported types (default : "xyz", "xyz_rgb", "xyz_normal", "xyz_rgb_normal")
+   * @return bool
+   */
+  bool check_supported(const std::string & type, const std::vector<std::string> & supported = supported_cloud_type);
 
   /** Get mesh at index
    *
@@ -72,230 +131,10 @@ public:
   }
 
 private:
-  std::map<std::string, std::shared_ptr<ASSIMPScene>> meshes_;
-  float scale_;
+  std::map<std::string, std::shared_ptr<ASSIMPScene>> meshes_; //
+  float scale_; // scaling factor
 };
 
-template<typename PointT>
-void MeshSampling::create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path)
-{
-  if(cloud.empty())
-  {
-    cerr << "Error: Empty point cloud." << endl;
-    return;
-  }
-
-  std::ofstream out(out_path);
-  if(!out.is_open())
-  {
-    std::cerr << "Error: Could not open file: " << out_path << std::endl;
-    return;
-  }
-
-  // Convert PCL cloud to a flat array for Qhull input
-  std::vector<double> qhull_input;
-  for(const auto & pt : cloud)
-  {
-    qhull_input.push_back(pt.x);
-    qhull_input.push_back(pt.y);
-    qhull_input.push_back(pt.z);
-  }
-
-  // Create Qhull object
-  Qhull qhull;
-  try
-  {
-    qhull.runQhull("pcl_input", 3, cloud.size(), qhull_input.data(), "Qt"); // 3D, triangulate option
-  }
-  catch(const std::exception & e)
-  {
-    cerr << "Qhull exception: " << e.what() << endl;
-    return;
-  }
-
-  int dim = qhull.hullDimension();
-  int numfacets = qhull.facetList().count();
-  int totneighbors = numfacets * dim; // not accurate for non-simplicial facets
-  out << dim << "\n" << qhull.points().size() << " " << numfacets << " " << totneighbors / 2 << "\n";
-
-  std::vector<std::vector<double>> points;
-  for(QhullPoints::ConstIterator i = qhull.points().begin(); i != qhull.points().end(); ++i)
-  {
-    QhullPoint point = *i;
-    points.push_back(point.toStdVector());
-  }
-
-  for(const auto & point : points)
-  {
-    for(size_t i = 0; i < point.size(); ++i)
-    {
-      out << std::setw(6) << point[i] << (i < point.size() - 1 ? " " : "\n");
-    }
-  }
-
-  QhullFacetList facets = qhull.facetList();
-  std::vector<std::vector<int>> facetVertices;
-
-  QhullFacetListIterator j(facets);
-  while(j.hasNext())
-  {
-    QhullFacet f = j.next();
-    std::vector<int> vertices;
-    if(!f.isGood())
-    {
-      continue;
-    }
-    else if(!f.isTopOrient() && f.isSimplicial())
-    {
-      QhullVertexSet vs = f.vertices();
-      vertices.push_back(vs[1].point().id());
-      vertices.push_back(vs[0].point().id());
-      for(int i = 2; i < static_cast<int>(vs.size()); ++i)
-      {
-        vertices.push_back(vs[i].point().id());
-      }
-    }
-    else
-    {
-      QhullVertexSetIterator k(f.vertices());
-      while(k.hasNext())
-      {
-        QhullVertex vertex = k.next();
-        vertices.push_back(vertex.point().id());
-      }
-    }
-    facetVertices.push_back(vertices);
-  }
-
-  for(const auto & vertices : facetVertices)
-  {
-    out << vertices.size() << " ";
-    for(int v : vertices)
-    {
-      out << v << " ";
-    }
-    out << "\n";
-  }
-
-  out.close();
-  std::cout << "Convex file save to " << out_path << std::endl;
-}
-
-template<typename PointT>
-void MeshSampling::create_clouds(unsigned N, const fs::path & out_path, const std::string & extension, bool binary_mode)
-{
-  std::string files_extension;
-  std::string output_path;
-
-  if(!fs::is_directory(out_path))
-  {
-    std::cout << "[Warning] extension given in out_path is used by creat_clouds";
-    files_extension = out_path.extension();
-  }
-  else
-  {
-    files_extension = extension;
-  }
-
-  for(const auto & mesh : meshes_)
-  {
-    std::cout << out_path.string() + mesh.first + files_extension << std::endl;
-    create_cloud<PointT>(mesh.second, N, out_path.string() + mesh.first + extension, binary_mode);
-  }
-}
-
-template<typename PointT>
-pcl::PointCloud<PointT> MeshSampling::create_cloud(const unsigned N){
-  WeightedRandomSampling<PointT> sampler(meshes_.begin()->second->scene());
-  auto cloud = sampler.weighted_random_sampling(N);
-  return *cloud;
-}
-
-template<typename PointT>
-pcl::PointCloud<PointT> MeshSampling::create_cloud(const aiScene * scene,
-                                                   const unsigned N,
-                                                   const fs::path & out_path,
-                                                   bool binary_mode)
-{
-  WeightedRandomSampling<PointT> sampler(scene);
-  auto cloud = sampler.weighted_random_sampling(N);
-
-  if(!out_path.empty())
-  {
-    auto extension = boost::algorithm::to_lower_copy(out_path.extension().string());
-    bool success = true;
-    if(extension == ".pcd")
-    {
-      success = pcl::io::savePCDFile(out_path, *cloud, binary_mode) == 0;
-    }
-    else if(extension == ".ply")
-    {
-      success = pcl::io::savePLYFile(out_path, *cloud, binary_mode) == 0;
-    }
-    else if(extension == ".qc")
-    {
-      success = mesh_sampling::io::saveQhullFile(out_path, *cloud);
-    }
-    else if(extension == ".stl")
-    {
-      pcl::ConvexHull<PointT> convex{};
-      const auto shared_cloud = typename pcl::PointCloud<PointT>::ConstPtr(cloud.release());
-      convex.setInputCloud(shared_cloud);
-      pcl::PolygonMesh mesh;
-      convex.reconstruct(mesh);
-      pcl::PointCloud<PointT> cloud{};
-      pcl::fromPCLPointCloud2(mesh.cloud, cloud);
-
-      // Compute the convex center
-      Eigen::Vector3f center = Eigen::Vector3f::Zero();
-      for(auto & poly : mesh.polygons)
-      {
-        if(poly.vertices.size() != 3)
-        {
-          throw std::runtime_error("pcl::ConvexHull did not reconstruct a triangular mesh");
-        }
-        center += (cloud[poly.vertices[0]].getVector3fMap() + cloud[poly.vertices[1]].getVector3fMap()
-                   + cloud[poly.vertices[2]].getVector3fMap())
-                  / (3 * mesh.polygons.size());
-      }
-
-      // Make sure all normals point away from the mesh center
-      // Since the mesh is convex this is enough to ensure the normals are consistent
-      for(auto & poly : mesh.polygons)
-      {
-        Eigen::Vector3f p1 = cloud[poly.vertices[0]].getVector3fMap();
-        Eigen::Vector3f p2 = cloud[poly.vertices[1]].getVector3fMap();
-        Eigen::Vector3f p3 = cloud[poly.vertices[2]].getVector3fMap();
-        Eigen::Vector3f n = (p2 - p1).cross(p3 - p1);
-        if(n.dot(center - p1) > 0)
-        {
-          std::swap(poly.vertices[1], poly.vertices[2]);
-        }
-      }
-#if PCL_VERSION_COMPARE(>=, 1, 8, 0)
-      success = pcl::io::savePolygonFileSTL(out_path, mesh, binary_mode);
-#else
-      success = pcl::io::savePolygonFileSTL(out, mesh);
-#endif
-    }
-    else
-    {
-      std::cerr << "Output pointcloud type " << extension << " is not supported";
-      return pcl::PointCloud<PointT>();
-    }
-
-    if(!success)
-    {
-      std::cerr << "Saving to " << out_path << " failed." << std::endl;
-      return pcl::PointCloud<PointT>();
-    }
-    else
-    {
-      std::cout << "Saving cloud to " << out_path << "success" << std::endl;
-    }
-  }
-
-  return *cloud;
-}
-
 }; // namespace mesh_sampling
+
+#include "mesh_sampling.hpp"
