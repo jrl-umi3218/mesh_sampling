@@ -14,8 +14,9 @@ void MeshSampling::load(const fs::path & in_path, float scale)
     if(fs::is_directory(in_path))
     {
       for(const auto & dir_entry : std::filesystem::directory_iterator{in_path})
-        meshes_.insert(
-            std::make_pair(dir_entry.path(), std::make_shared<ASSIMPScene>(dir_entry.path().string(), scale)));
+        if(check_supported(dir_entry.path().extension(), supported_extensions))
+          meshes_.insert(
+              std::make_pair(dir_entry.path(), std::make_shared<ASSIMPScene>(dir_entry.path().string(), scale)));
     }
     else
     {
@@ -29,13 +30,10 @@ void MeshSampling::load(const fs::path & in_path, float scale)
   }
 }
 
-bool MeshSampling::check_supported(const std::vector<std::string> & supported, const std::string & value)
+bool MeshSampling::check_supported(const std::string & type, const std::vector<std::string> & supported)
 {
-  if(std::find(supported.begin(), supported.end(), value) == supported.end())
+  if(std::find(supported.begin(), supported.end(), type) == supported.end())
   {
-    std::cerr << "This program only supports: ";
-    std::copy(supported.begin(), supported.end(), std::ostream_iterator<std::string>(std::cerr, ", "));
-    std::cerr << std::endl;
     return false;
   }
 
