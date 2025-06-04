@@ -20,7 +20,7 @@ jobs:
       update-stable-and-head: true
       matrix: |
           {
-            "dist": ["bionic", "focal", "jammy"],
+            "dist": ["jammy", "noble"],
             "arch": ["amd64"]
           }
     secrets:
