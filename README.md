@@ -75,8 +75,18 @@ sudo make install
 
 A simple binary executable `mesh_sampling` is provided. It'll convert any model supported by ASSIMP into its corresponding pointcloud with a given number of points. The command line is of the general form: 
 
+* From file to file
+
 ```
-mesh_sampling /path/to/model.<supported_mesh_format> /path/to/cloud/cloud.<supported_cloud_format> --type xyz_rgb_normal --samples 10000 --binary
+mesh_sampling /path/to/model.<supported_mesh_format> --out /path/to/cloud/cloud.<supported_cloud_format> --type xyz_rgb_normal --samples 10000 --binary
+```
+
+* From folder to folder
+
+Here the default cloud format is `.qc`. For all files in `/path/to/models` a file `/path/to/cloud/filename.qc` will be generated.
+
+```
+mesh_sampling /path/to/models --out /path/to/cloud --type xyz_rgb_normal --samples 10000 --binary
 ```
 
 Where:
@@ -94,9 +104,17 @@ pcl_viewer /tmp/cloud.pcd -normals_scale 5 -normals 1
 
 ### Generating convex files using qhull
 
-To generate convex files, you will first need to convex your mesh to qhull's `.qc` format, then use `qconvex` to generate the convex hull.
+To generate convex files, you need to add `--convex` option to the command line. The convex file will be generated in the specified folder as `filename-ch.txt`.
 
+
+* From file 
 ```
-mesh_sampling /path/to/model.<supported_mesh_format> /tmp/test.qc --type xyz --samples 10000
-qconvex TI /tmp/test.qc TO /tmp/test-ch.txt Qt o f
+mesh_sampling /path/to/model.<supported_mesh_format> --out /tmp/test.qc --convex /path --type xyz --samples 10000
 ```
+
+* From folder (check all files with respect to the supported extensions ".ply", ".pcd", ".qc", ".stl") 
+```
+mesh_sampling /path/to/models --out /tmp --convex /tmp --type xyz --samples 10000
+```
+
+> Cloud saving is optional, you can remove `--out` option to avoid it.
