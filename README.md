@@ -98,7 +98,7 @@ See `mesh_sampling --help` for more options.
 Example:
 
 ```bash
-mesh_sampling /path/to/model.dae /tmp/cloud.pcd --type xyz_rgb_normal --samples 10000 --binary
+mesh_sampling --in /path/to/model.dae --out /tmp/cloud.pcd --type xyz_rgb_normal --samples 10000 --binary
 pcl_viewer /tmp/cloud.pcd -normals_scale 5 -normals 1
 ```
 
@@ -108,13 +108,13 @@ To generate convex files, you need to add `--convex` option to the command line.
 
 
 * From file 
-```
-mesh_sampling /path/to/model.<supported_mesh_format> --out /tmp/test.qc --convex /path --type xyz --samples 10000
+```bash
+mesh_sampling --in /path/to/model.<supported_mesh_format> --out /tmp/test.qc --convex /path --type xyz --samples 10000
 ```
 
 * From folder (check all files with respect to the supported extensions ".ply", ".pcd", ".qc", ".stl") 
-```
-mesh_sampling /path/to/models --out /tmp --convex /tmp --type xyz --samples 10000
+```bash
+mesh_sampling --in /path/to/models --out /tmp --convex /tmp --type xyz --samples 10000
 ```
 
 > Cloud saving is optional, you can remove `--out` option to avoid it.
