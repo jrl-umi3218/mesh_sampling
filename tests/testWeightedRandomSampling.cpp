@@ -6,7 +6,9 @@
 
 #include <iostream>
 #include <memory>
+#include <mesh_sampling/assimp_scene.h>
 #include <mesh_sampling/mesh_sampling.h>
+#include <mesh_sampling/weighted_random_sampling.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/ply_io.h>
 #include <pcl/point_types.h>

@@ -17,7 +17,9 @@
 // along with mesh_sampling.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
+#include <mesh_sampling/assimp_scene.h>
 #include <mesh_sampling/mesh_sampling.h>
+#include <mesh_sampling/weighted_random_sampling.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/ply_io.h>
 #include <pcl/point_types.h>
@@ -60,7 +62,6 @@ int main(int argc, char ** argv)
   WeightedRandomSampling<pcl::PointXYZ> sampling_xyz(sampler.mesh(model_path)->scene());
   auto cloud_xyz = sampling_xyz.weighted_random_sampling(N);
   pcl::io::savePCDFileASCII("/tmp/example_xyz.pcd", *cloud_xyz);
-  std::cout << "Cloud size: " << cloud_xyz->size() << ", expected: " << N << std::endl;
 
   WeightedRandomSampling<pcl::PointXYZRGB> sampling_rgb(sampler.mesh(model_path)->scene());
   auto cloud_rgb = sampling_rgb.weighted_random_sampling(N);
