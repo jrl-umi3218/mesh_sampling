@@ -1,33 +1,17 @@
 #pragma once
 
 #include <filesystem>
-#include <iostream>
-#include <libqhullcpp/Qhull.h>
-#include <libqhullcpp/QhullFacet.h>
-#include <libqhullcpp/QhullFacetList.h>
-#include <libqhullcpp/QhullFacetSet.h>
-#include <libqhullcpp/QhullLinkedList.h>
-#include <libqhullcpp/QhullPoint.h>
-#include <libqhullcpp/QhullUser.h>
-#include <libqhullcpp/QhullVertex.h>
-#include <libqhullcpp/QhullVertexSet.h>
 #include <map>
-#include <mesh_sampling/assimp_scene.h>
-#include <mesh_sampling/qhull_io.h>
-#include <mesh_sampling/weighted_random_sampling.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/io/ply_io.h>
-#include <pcl/io/vtk_lib_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/surface/convex_hull.h>
 
-using namespace orgQhull;
+class aiScene;
 
 namespace fs = std::filesystem;
 
 namespace mesh_sampling
 {
+struct ASSIMPScene;
 
 const auto supported_cloud_type = std::vector<std::string>{"xyz", "xyz_rgb", "xyz_normal", "xyz_rgb_normal"};
 const auto supported_extensions = std::vector<std::string>{".ply", ".pcd", ".qc", ".stl"};
@@ -35,8 +19,9 @@ const auto supported_extensions = std::vector<std::string>{".ply", ".pcd", ".qc"
 class MeshSampling
 {
 public:
-  MeshSampling() = default;
+  MeshSampling();
   MeshSampling(const fs::path & in_path, float scale = 1);
+  ~MeshSampling();
 
   /**
    * @brief Load mesh from full path or directory
@@ -53,7 +38,7 @@ public:
    * @param N number of sampling points (default: 2000)
    * @return pcl::PointCloud<PointT>
    */
-  template<typename PointT>
+  template<typename PointT = pcl::PointXYZ>
   pcl::PointCloud<PointT> cloud(const unsigned N = 2000);
 
   /**
@@ -66,7 +51,7 @@ public:
    * @param binary_mode is binary (default: false)
    * @return pcl::PointCloud<PointT>
    */
-  template<typename PointT>
+  template<typename PointT = pcl::PointXYZ>
   pcl::PointCloud<PointT> create_cloud(const aiScene * scene,
                                        unsigned N,
                                        const fs::path & out_path = {},
@@ -82,7 +67,7 @@ public:
    * @param extension saving extension (default: ".qc")
    * @param binary_mode is binary mnode (default: false)
    */
-  template<typename PointT>
+  template<typename PointT = pcl::PointXYZ>
   std::map<std::string, pcl::PointCloud<PointT>> create_clouds(unsigned N,
                                                                const fs::path & out_path = {},
                                                                const std::string & extension = ".qc",
@@ -95,10 +80,10 @@ public:
    * @param cloud PCL point cloud
    * @param out_path output directory
    */
-  template<typename PointT>
+  template<typename PointT = pcl::PointXYZ>
   void create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path);
 
-  template<typename PointT>
+  template<typename PointT = pcl::PointXYZ>
   void create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds, const fs::path & out_path);
 
   /**
@@ -123,18 +108,11 @@ public:
    * \param path mesh path
    * @return ASSIMPScene&
    */
-  inline ASSIMPScene * mesh(const std::string & path)
-  {
-    if(meshes_.count(path) > 0) return meshes_.begin()->second.get();
-
-    return nullptr;
-  }
+  ASSIMPScene * mesh(const std::string & path);
 
 private:
-  std::map<std::string, std::shared_ptr<ASSIMPScene>> meshes_; //
-  float scale_; // scaling factor
+  class Impl;
+  std::unique_ptr<Impl> impl_;
 };
 
 }; // namespace mesh_sampling
-
-#include "mesh_sampling.hpp"

@@ -1,26 +1,84 @@
-
 #pragma once
-#include "mesh_sampling.h"
-#include <filesystem>
-#include <libqhullcpp/QhullPoints.h>
-#include <map>
-#include <string>
 
-namespace mesh_sampling {
+#include <libqhullcpp/Qhull.h>
+#include <libqhullcpp/QhullFacet.h>
+#include <libqhullcpp/QhullFacetList.h>
+#include <libqhullcpp/QhullFacetSet.h>
+#include <libqhullcpp/QhullLinkedList.h>
+#include <libqhullcpp/QhullPoint.h>
+#include <libqhullcpp/QhullUser.h>
+#include <libqhullcpp/QhullVertex.h>
+#include <libqhullcpp/QhullVertexSet.h>
+#include <mesh_sampling/assimp_scene.h>
+#include <mesh_sampling/mesh_sampling.h>
+#include <mesh_sampling/qhull_io.h>
+#include <mesh_sampling/weighted_random_sampling.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/io/ply_io.h>
+#include <pcl/io/vtk_lib_io.h>
+#include <pcl/surface/convex_hull.h>
+
+using namespace mesh_sampling;
+using namespace orgQhull;
+
+namespace mesh_sampling
+{
+
+class MeshSampling::Impl
+{
+public:
+  Impl() = default;
+
+  void load(const fs::path & in_path, float scale);
+
+  template<typename PointT>
+  pcl::PointCloud<PointT> cloud(const unsigned N = 2000);
+
+  template<typename PointT>
+  pcl::PointCloud<PointT> create_cloud(const aiScene * scene,
+                                       unsigned N,
+                                       const fs::path & out_path = {},
+                                       bool binary_mode = false);
+
+  bool check_supported(const std::string & type, const std::vector<std::string> & supported = supported_cloud_type);
+
+  void convertTo(const fs::path & out_path, bool binary = false);
+
+  template<typename PointT>
+  std::map<std::string, pcl::PointCloud<PointT>> create_clouds(unsigned N,
+                                                               const fs::path & out_path = {},
+                                                               const std::string & extension = ".qc",
+                                                               bool binary_mode = false);
+
+  template<typename PointT>
+  void create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path);
+
+  template<typename PointT>
+  void create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds, const fs::path & out_path);
+
+  inline ASSIMPScene * mesh(const std::string & path)
+  {
+    if(meshes_.count(path) > 0) return meshes_.begin()->second.get();
+
+    return nullptr;
+  }
+
+private:
+  std::map<std::string, std::shared_ptr<ASSIMPScene>> meshes_; //
+};
+
 template<typename PointT>
-void MeshSampling::create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path)
+void MeshSampling::Impl::create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path)
 {
   if(cloud.empty())
   {
-    cerr << "Error: Empty point cloud." << endl;
-    return;
+    throw std::invalid_argument("create_convex: input cloud is empty.");
   }
 
   std::ofstream out(out_path);
   if(!out.is_open())
   {
-    std::cerr << "Error: Could not open file: " << out_path << std::endl;
-    return;
+    throw std::invalid_argument("create_convex: could not open file :" + out_path.string());
   }
 
   // Convert PCL cloud to a flat array for Qhull input
@@ -40,8 +98,7 @@ void MeshSampling::create_convex(const pcl::PointCloud<PointT> & cloud, const fs
   }
   catch(const std::exception & e)
   {
-    cerr << "Qhull exception: " << e.what() << endl;
-    return;
+    throw std::runtime_error(std::string("Qhull run failed: ") + e.what());
   }
 
   int dim = qhull.hullDimension();
@@ -113,40 +170,52 @@ void MeshSampling::create_convex(const pcl::PointCloud<PointT> & cloud, const fs
 }
 
 template<typename PointT>
-void MeshSampling::create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> &clouds, const fs::path &out_path){
-  if(!fs::is_directory(out_path)){
+void MeshSampling::Impl::create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
+                                         const fs::path & out_path)
+{
+  if(!fs::is_directory(out_path))
+  {
     std::cerr << "[Error] create_convexes, out_path has to be a directory" << std::endl;
     return;
   }
-  for(const auto & cloud : clouds){
+  for(const auto & cloud : clouds)
+  {
     create_convex(cloud.second, out_path / (fs::path(cloud.first).filename().stem().string() + "-ch.txt"));
   }
 }
 
 template<typename PointT>
-std::map<std::string, pcl::PointCloud<PointT>> MeshSampling::create_clouds(unsigned N, const fs::path & out_path, const std::string & extension, bool binary_mode)
+std::map<std::string, pcl::PointCloud<PointT>> MeshSampling::Impl::create_clouds(unsigned N,
+                                                                                 const fs::path & out_path,
+                                                                                 const std::string & extension,
+                                                                                 bool binary_mode)
 {
   std::map<std::string, pcl::PointCloud<PointT>> clouds;
-  if(!out_path.empty()){
+  if(!out_path.empty())
+  {
     if(!fs::is_directory(out_path) && meshes_.size() > 1)
     {
-      std::cerr << "[Error] create_clouds, out_path is not a directory" << std::endl;;
+      std::cerr << "[Error] create_clouds, out_path is not a directory" << std::endl;
+      ;
       return {};
     }
 
-    if(extension.empty()){
+    if(extension.empty())
+    {
       std::cerr << "[Error] create_clouds, extension is not set" << std::endl;
       return {};
     }
 
     for(const auto & mesh : meshes_)
     {
-      auto path = fs::is_directory(out_path) ? out_path / (fs::path(mesh.first).filename().stem().string() + extension) : out_path;
+      auto path = fs::is_directory(out_path) ? out_path / (fs::path(mesh.first).filename().stem().string() + extension)
+                                             : out_path;
       auto cloud = create_cloud<PointT>(mesh.second->scene(), N, path, binary_mode);
       clouds.insert({mesh.first, cloud});
     }
   }
-  else{
+  else
+  {
     for(const auto & mesh : meshes_)
     {
       auto cloud = create_cloud<PointT>(mesh.second->scene(), N, {}, binary_mode);
@@ -158,17 +227,18 @@ std::map<std::string, pcl::PointCloud<PointT>> MeshSampling::create_clouds(unsig
 }
 
 template<typename PointT>
-pcl::PointCloud<PointT> MeshSampling::cloud(const unsigned N){
+pcl::PointCloud<PointT> MeshSampling::Impl::cloud(const unsigned N)
+{
   WeightedRandomSampling<PointT> sampler(meshes_.begin()->second->scene());
   auto cloud = sampler.weighted_random_sampling(N);
   return *cloud;
 }
 
 template<typename PointT>
-pcl::PointCloud<PointT> MeshSampling::create_cloud(const aiScene * scene,
-                                                   const unsigned N,
-                                                   const fs::path & out_path,
-                                                   bool binary_mode)
+pcl::PointCloud<PointT> MeshSampling::Impl::create_cloud(const aiScene * scene,
+                                                         const unsigned N,
+                                                         const fs::path & out_path,
+                                                         bool binary_mode)
 {
   WeightedRandomSampling<PointT> sampler(scene);
   auto cloud = sampler.weighted_random_sampling(N);
@@ -250,4 +320,43 @@ pcl::PointCloud<PointT> MeshSampling::create_cloud(const aiScene * scene,
 
   return *cloud;
 }
+
+void MeshSampling::Impl::load(const fs::path & in_path, float scale)
+{
+  try
+  {
+    if(fs::is_directory(in_path))
+    {
+      for(const auto & dir_entry : std::filesystem::directory_iterator{in_path})
+        if(check_supported(dir_entry.path().extension(), supported_extensions))
+          meshes_.insert(
+              std::make_pair(dir_entry.path(), std::make_shared<ASSIMPScene>(dir_entry.path().string(), scale)));
+    }
+    else
+    {
+      meshes_.insert(std::make_pair(in_path, std::make_shared<ASSIMPScene>(in_path, scale)));
+    }
+  }
+  catch(std::runtime_error & e)
+  {
+    std::cerr << e.what() << std::endl;
+    return;
+  }
 }
+
+void MeshSampling::Impl::convertTo(const fs::path & out_path, bool binary)
+{
+  for(auto & mesh : meshes_) mesh.second->exportScene(out_path, binary);
+}
+
+bool MeshSampling::Impl::check_supported(const std::string & type, const std::vector<std::string> & supported)
+{
+  if(std::find(supported.begin(), supported.end(), type) == supported.end())
+  {
+    return false;
+  }
+
+  return true;
+}
+
+} // namespace mesh_sampling
