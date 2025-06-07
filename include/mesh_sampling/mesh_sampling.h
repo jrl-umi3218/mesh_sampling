@@ -84,7 +84,9 @@ public:
   void create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path);
 
   template<typename PointT = pcl::PointXYZ>
-  void create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds, const fs::path & out_path);
+  void create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
+                       const fs::path & out_path,
+                       bool stop_on_fail = true);
 
   /**
    * @brief Export all meshes to a file in a format support by ASSIMP

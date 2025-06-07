@@ -32,29 +32,28 @@ public:
   void load(const fs::path & in_path, float scale);
 
   template<typename PointT>
-  pcl::PointCloud<PointT> cloud(const unsigned N = 2000);
+  pcl::PointCloud<PointT> cloud(const unsigned N);
 
   template<typename PointT>
-  pcl::PointCloud<PointT> create_cloud(const aiScene * scene,
-                                       unsigned N,
-                                       const fs::path & out_path = {},
-                                       bool binary_mode = false);
+  pcl::PointCloud<PointT> create_cloud(const aiScene * scene, unsigned N, const fs::path & out_path, bool binary_mode);
 
   bool check_supported(const std::string & type, const std::vector<std::string> & supported = supported_cloud_type);
 
-  void convertTo(const fs::path & out_path, bool binary = false);
+  void convertTo(const fs::path & out_path, bool binary);
 
   template<typename PointT>
   std::map<std::string, pcl::PointCloud<PointT>> create_clouds(unsigned N,
-                                                               const fs::path & out_path = {},
-                                                               const std::string & extension = ".qc",
-                                                               bool binary_mode = false);
+                                                               const fs::path & out_path,
+                                                               const std::string & extension,
+                                                               bool binary_mode);
 
   template<typename PointT>
   void create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path);
 
   template<typename PointT>
-  void create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds, const fs::path & out_path);
+  void create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
+                       const fs::path & out_path,
+                       bool stop_on_fail);
 
   inline ASSIMPScene * mesh(const std::string & path)
   {
@@ -171,16 +170,26 @@ void MeshSampling::Impl::create_convex(const pcl::PointCloud<PointT> & cloud, co
 
 template<typename PointT>
 void MeshSampling::Impl::create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
-                                         const fs::path & out_path)
+                                         const fs::path & out_path,
+                                         bool stop_on_fail)
 {
   if(!fs::is_directory(out_path))
   {
-    std::cerr << "[Error] create_convexes, out_path has to be a directory" << std::endl;
-    return;
+    throw std::invalid_argument("create_convexes: out_path has to be a directory");
   }
+
   for(const auto & cloud : clouds)
   {
-    create_convex(cloud.second, out_path / (fs::path(cloud.first).filename().stem().string() + "-ch.txt"));
+    try
+    {
+      create_convex(cloud.second, out_path / (fs::path(cloud.first).filename().stem().string() + "-ch.txt"));
+    }
+    catch(const std::exception & e)
+    {
+      std::cerr << e.what() << std::endl;
+
+      if(stop_on_fail) return;
+    }
   }
 }
 
