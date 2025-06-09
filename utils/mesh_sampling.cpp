@@ -2,8 +2,8 @@
  * Copyright 2017-2025 CNRS-UM LIRMM, CNRS-AIST JRL
  */
 
-#include <mesh_sampling/mesh_sampling.h>
 #include <mesh_sampling/CLI11.hpp>
+#include <mesh_sampling/mesh_sampling.h>
 
 namespace fs = std::filesystem;
 
@@ -27,7 +27,7 @@ int main(int argc, char ** argv)
   app.add_option("--samples", N, "Number of points to sample")->default_val(10000)->check(CLI::PositiveNumber);
 
   float scale;
-  app.add_option("--scale", scale, "Scale factor applied to the mesh")->default_val(1.0)->check(CLI::Range(0,1));
+  app.add_option("--scale", scale, "Scale factor applied to the mesh")->default_val(1.0)->check(CLI::Range(0, 1));
 
   std::string cloud_type = "xyz_rgb_normal";
   app.add_option("--type, -t", cloud_type, "Type of cloud to generate (xyz, xyz_rgb, xyz_rgb_normal)");
@@ -36,15 +36,18 @@ int main(int argc, char ** argv)
   app.add_option("--binary, -b", binary_format, "Outputs in binary format (default: false)")->default_val(false);
 
   bool convert;
-  app.add_option("--convert", convert, "Convert from one mesh type to another (supported by ASSIMP)")->default_val(false);
+  app.add_option("--convert", convert, "Convert from one mesh type to another (supported by ASSIMP)")
+      ->default_val(false);
 
   CLI11_PARSE(app, argc, argv);
 
   MeshSampling mesh_sampler(in);
 
-  if(!mesh_sampler.check_supported(cloud_type)){\
+  if(!mesh_sampler.check_supported(cloud_type))
+  {
     std::cerr << "Type not suppported : ";
-    std::copy(mesh_sampling::supported_cloud_type.begin(), mesh_sampling::supported_cloud_type.end(), std::ostream_iterator<std::string>(std::cerr, ", "));
+    std::copy(mesh_sampling::supported_cloud_type.begin(), mesh_sampling::supported_cloud_type.end(),
+              std::ostream_iterator<std::string>(std::cerr, ", "));
     std::cerr << std::endl;
   }
 
@@ -57,26 +60,22 @@ int main(int argc, char ** argv)
     if(cloud_type == "xyz")
     {
       auto mesh = mesh_sampler.create_clouds(N, out, ".qc", binary_format);
-      if(!convex.empty())
-        mesh_sampler.create_convexes(mesh, convex);
+      if(!convex.empty()) mesh_sampler.create_convexes(mesh, convex);
     }
     else if(cloud_type == "xyz_rgb")
     {
       auto mesh = mesh_sampler.create_clouds<pcl::PointXYZRGB>(N, out, ".qc", binary_format);
-      if(!convex.empty())
-        mesh_sampler.create_convexes<pcl::PointXYZRGB>(mesh, convex);
+      if(!convex.empty()) mesh_sampler.create_convexes<pcl::PointXYZRGB>(mesh, convex);
     }
     else if(cloud_type == "xyz_normal")
     {
       auto mesh = mesh_sampler.create_clouds<pcl::PointNormal>(N, out, ".qc", binary_format);
-      if(!convex.empty())
-        mesh_sampler.create_convexes<pcl::PointNormal>(mesh, convex);
+      if(!convex.empty()) mesh_sampler.create_convexes<pcl::PointNormal>(mesh, convex);
     }
     else if(cloud_type == "xyz_rgb_normal")
     {
       auto mesh = mesh_sampler.create_clouds<pcl::PointXYZRGBNormal>(N, out, ".qc", binary_format);
-      if(!convex.empty())
-        mesh_sampler.create_convexes<pcl::PointXYZRGBNormal>(mesh, convex);
+      if(!convex.empty()) mesh_sampler.create_convexes<pcl::PointXYZRGBNormal>(mesh, convex);
     }
   }
   return 0;

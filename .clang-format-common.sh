@@ -12,4 +12,3 @@ fi
 
 # Find all source files in the project minus those that are auto-generated or we do not maintain
 src_files=`find src tests include -type f \( -name '*.cpp' -or -name '*.h' \)`
-

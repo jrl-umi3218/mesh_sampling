@@ -73,7 +73,7 @@ sudo make install
 
 ### Command-line tool
 
-A simple binary executable `mesh_sampling` is provided. It'll convert any model supported by ASSIMP into its corresponding pointcloud with a given number of points. The command line is of the general form: 
+A simple binary executable `mesh_sampling` is provided. It'll convert any model supported by ASSIMP into its corresponding pointcloud with a given number of points. The command line is of the general form:
 
 * From file to file
 
@@ -107,12 +107,12 @@ pcl_viewer /tmp/cloud.pcd -normals_scale 5 -normals 1
 To generate convex files, you need to add `--convex` option to the command line. The convex file will be generated in the specified folder as `filename-ch.txt`.
 
 
-* From file 
+* From file
 ```bash
 mesh_sampling --in /path/to/model.<supported_mesh_format> --out /tmp/test.qc --convex /path --type xyz --samples 10000
 ```
 
-* From folder (check all files with respect to the supported extensions ".ply", ".pcd", ".qc", ".stl") 
+* From folder (check all files with respect to the supported extensions ".ply", ".pcd", ".qc", ".stl")
 ```bash
 mesh_sampling --in /path/to/models --out /tmp --convex /tmp --type xyz --samples 10000
 ```
