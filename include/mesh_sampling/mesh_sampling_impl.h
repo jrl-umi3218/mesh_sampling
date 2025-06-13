@@ -1,13 +1,11 @@
 #pragma once
 
+#include <libqhull/io.h>
 #include <libqhullcpp/Qhull.h>
-#include <libqhullcpp/QhullFacet.h>
-#include <libqhullcpp/QhullFacetList.h>
 #include <libqhullcpp/QhullFacetSet.h>
 #include <libqhullcpp/QhullLinkedList.h>
 #include <libqhullcpp/QhullPoint.h>
 #include <libqhullcpp/QhullUser.h>
-#include <libqhullcpp/QhullVertex.h>
 #include <libqhullcpp/QhullVertexSet.h>
 #include <mesh_sampling/assimp_scene.h>
 #include <mesh_sampling/mesh_sampling.h>
@@ -74,8 +72,8 @@ void MeshSampling::Impl::create_convex(const pcl::PointCloud<PointT> & cloud, co
     throw std::invalid_argument("create_convex: input cloud is empty.");
   }
 
-  std::ofstream out(out_path);
-  if(!out.is_open())
+  FILE * fout = fopen(out_path.c_str(), "w");
+  if(fout == nullptr)
   {
     throw std::invalid_argument("create_convex: could not open file :" + out_path.string());
   }
@@ -91,6 +89,7 @@ void MeshSampling::Impl::create_convex(const pcl::PointCloud<PointT> & cloud, co
 
   // Create Qhull object
   Qhull qhull;
+  qhull.qh()->fout = fout;
   try
   {
     qhull.runQhull("pcl_input", 3, cloud.size(), qhull_input.data(), "Qt"); // 3D, triangulate option
@@ -100,71 +99,8 @@ void MeshSampling::Impl::create_convex(const pcl::PointCloud<PointT> & cloud, co
     throw std::runtime_error(std::string("Qhull run failed: ") + e.what());
   }
 
-  int dim = qhull.hullDimension();
-  int numfacets = qhull.facetList().count();
-  int totneighbors = numfacets * dim; // not accurate for non-simplicial facets
-  out << dim << "\n" << qhull.points().size() << " " << numfacets << " " << totneighbors / 2 << "\n";
+  qhull.outputQhull("o f");
 
-  std::vector<std::vector<double>> points;
-  for(QhullPoints::ConstIterator i = qhull.points().begin(); i != qhull.points().end(); ++i)
-  {
-    QhullPoint point = *i;
-    points.push_back(point.toStdVector());
-  }
-
-  for(const auto & point : points)
-  {
-    for(size_t i = 0; i < point.size(); ++i)
-    {
-      out << std::setw(6) << point[i] << (i < point.size() - 1 ? " " : "\n");
-    }
-  }
-
-  QhullFacetList facets = qhull.facetList();
-  std::vector<std::vector<int>> facetVertices;
-
-  QhullFacetListIterator j(facets);
-  while(j.hasNext())
-  {
-    QhullFacet f = j.next();
-    std::vector<int> vertices;
-    if(!f.isGood())
-    {
-      continue;
-    }
-    else if(!f.isTopOrient() && f.isSimplicial())
-    {
-      QhullVertexSet vs = f.vertices();
-      vertices.push_back(vs[1].point().id());
-      vertices.push_back(vs[0].point().id());
-      for(int i = 2; i < static_cast<int>(vs.size()); ++i)
-      {
-        vertices.push_back(vs[i].point().id());
-      }
-    }
-    else
-    {
-      QhullVertexSetIterator k(f.vertices());
-      while(k.hasNext())
-      {
-        QhullVertex vertex = k.next();
-        vertices.push_back(vertex.point().id());
-      }
-    }
-    facetVertices.push_back(vertices);
-  }
-
-  for(const auto & vertices : facetVertices)
-  {
-    out << vertices.size() << " ";
-    for(int v : vertices)
-    {
-      out << v << " ";
-    }
-    out << "\n";
-  }
-
-  out.close();
   std::cout << "Convex file saved to " << out_path << std::endl;
 }
 
