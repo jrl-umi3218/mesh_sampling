@@ -56,15 +56,16 @@ std::map<std::string, pcl::PointCloud<PointT>> MeshSampling::create_clouds(unsig
 template<typename PointT>
 std::string MeshSampling::create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path)
 {
-  impl_->create_convex<PointT>(cloud, out_path);
+  return impl_->create_convex<PointT>(cloud, out_path);
 }
 
 template<typename PointT>
-void MeshSampling::create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
-                                   const fs::path & out_path,
-                                   bool stop_on_fail)
+std::map<std::string, std::string> MeshSampling::create_convexes(
+    const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
+    const fs::path & out_path,
+    bool stop_on_fail)
 {
-  impl_->create_convexes<PointT>(clouds, out_path, stop_on_fail);
+  return impl_->create_convexes<PointT>(clouds, out_path, stop_on_fail);
 }
 
 // Explicit instantiations (only ones you need)
@@ -76,9 +77,10 @@ template std::map<std::string, pcl::PointCloud<pcl::PointXYZ>> MeshSampling::cre
                                                                                            const std::string &,
                                                                                            bool);
 template std::string MeshSampling::create_convex(const pcl::PointCloud<pcl::PointXYZ> &, const fs::path &);
-template void MeshSampling::create_convexes(const std::map<std::string, pcl::PointCloud<pcl::PointXYZ>> &,
-                                            const fs::path &,
-                                            bool);
+template std::map<std::string, std::string> MeshSampling::create_convexes(
+    const std::map<std::string, pcl::PointCloud<pcl::PointXYZ>> &,
+    const fs::path &,
+    bool);
 
 template pcl::PointCloud<pcl::PointXYZRGB> MeshSampling::cloud(unsigned);
 template pcl::PointCloud<pcl::PointXYZRGB> MeshSampling::create_cloud(const aiScene *,
@@ -90,9 +92,10 @@ template std::map<std::string, pcl::PointCloud<pcl::PointXYZRGB>> MeshSampling::
                                                                                               const std::string &,
                                                                                               bool);
 template std::string MeshSampling::create_convex(const pcl::PointCloud<pcl::PointXYZRGB> &, const fs::path &);
-template void MeshSampling::create_convexes(const std::map<std::string, pcl::PointCloud<pcl::PointXYZRGB>> &,
-                                            const fs::path &,
-                                            bool);
+template std::map<std::string, std::string> MeshSampling::create_convexes(
+    const std::map<std::string, pcl::PointCloud<pcl::PointXYZRGB>> &,
+    const fs::path &,
+    bool);
 
 template pcl::PointCloud<pcl::PointNormal> MeshSampling::cloud(unsigned);
 template pcl::PointCloud<pcl::PointNormal> MeshSampling::create_cloud(const aiScene *,
@@ -104,9 +107,10 @@ template std::map<std::string, pcl::PointCloud<pcl::PointNormal>> MeshSampling::
                                                                                               const std::string &,
                                                                                               bool);
 template std::string MeshSampling::create_convex(const pcl::PointCloud<pcl::PointNormal> &, const fs::path &);
-template void MeshSampling::create_convexes(const std::map<std::string, pcl::PointCloud<pcl::PointNormal>> &,
-                                            const fs::path &,
-                                            bool);
+template std::map<std::string, std::string> MeshSampling::create_convexes(
+    const std::map<std::string, pcl::PointCloud<pcl::PointNormal>> &,
+    const fs::path &,
+    bool);
 
 template pcl::PointCloud<pcl::PointXYZRGBNormal> MeshSampling::cloud(unsigned);
 template pcl::PointCloud<pcl::PointXYZRGBNormal> MeshSampling::create_cloud(const aiScene *,
@@ -118,6 +122,7 @@ template std::map<std::string, pcl::PointCloud<pcl::PointXYZRGBNormal>> MeshSamp
                                                                                                     const std::string &,
                                                                                                     bool);
 template std::string MeshSampling::create_convex(const pcl::PointCloud<pcl::PointXYZRGBNormal> &, const fs::path &);
-template void MeshSampling::create_convexes(const std::map<std::string, pcl::PointCloud<pcl::PointXYZRGBNormal>> &,
-                                            const fs::path &,
-                                            bool);
+template std::map<std::string, std::string> MeshSampling::create_convexes(
+    const std::map<std::string, pcl::PointCloud<pcl::PointXYZRGBNormal>> &,
+    const fs::path &,
+    bool);

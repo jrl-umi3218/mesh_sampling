@@ -16,6 +16,7 @@
 #include <pcl/io/ply_io.h>
 #include <pcl/io/vtk_lib_io.h>
 #include <pcl/surface/convex_hull.h>
+#include <string>
 //clang-format on
 
 using namespace mesh_sampling;
@@ -51,7 +52,7 @@ public:
   std::string create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path);
 
   template<typename PointT>
-  void create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
+  std::map<std::string, std::string> create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
                        const fs::path & out_path,
                        bool stop_on_fail);
 
@@ -132,28 +133,35 @@ std::string MeshSampling::Impl::create_convex(const pcl::PointCloud<PointT> & cl
 }
 
 template<typename PointT>
-void MeshSampling::Impl::create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
+std::map<std::string, std::string> MeshSampling::Impl::create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
                                          const fs::path & out_path,
                                          bool stop_on_fail)
 {
-  if(!fs::is_directory(out_path))
+  if(!out_path.empty() && !fs::is_directory(out_path))
   {
     throw std::invalid_argument("create_convexes: out_path has to be a directory");
   }
+
+  std::map<std::string, std::string> output;
 
   for(const auto & cloud : clouds)
   {
     try
     {
-      create_convex(cloud.second, out_path / (fs::path(cloud.first).filename().stem().string() + "-ch.txt"));
+      if(out_path.empty())
+        output[cloud.first] = create_convex(cloud.second, {});
+      else
+        output[cloud.first] = create_convex(cloud.second, out_path / (fs::path(cloud.first).filename().stem().string() + "-ch.txt"));
     }
     catch(const std::exception & e)
     {
       std::cerr << e.what() << std::endl;
 
-      if(stop_on_fail) return;
+      if(stop_on_fail) return {};
     }
   }
+
+  return output;
 }
 
 template<typename PointT>
