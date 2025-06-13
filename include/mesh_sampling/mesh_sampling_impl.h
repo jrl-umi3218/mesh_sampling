@@ -1,12 +1,13 @@
 #pragma once
 
-#include <libqhull/io.h>
+// clang-format off
 #include <libqhullcpp/Qhull.h>
 #include <libqhullcpp/QhullFacetSet.h>
 #include <libqhullcpp/QhullLinkedList.h>
 #include <libqhullcpp/QhullPoint.h>
 #include <libqhullcpp/QhullUser.h>
 #include <libqhullcpp/QhullVertexSet.h>
+#include <libqhull/io.h>
 #include <mesh_sampling/assimp_scene.h>
 #include <mesh_sampling/mesh_sampling.h>
 #include <mesh_sampling/qhull_io.h>
@@ -15,6 +16,7 @@
 #include <pcl/io/ply_io.h>
 #include <pcl/io/vtk_lib_io.h>
 #include <pcl/surface/convex_hull.h>
+//clang-format on
 
 using namespace mesh_sampling;
 using namespace orgQhull;
@@ -46,7 +48,7 @@ public:
                                                                bool binary_mode);
 
   template<typename PointT>
-  void create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path);
+  std::string create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path);
 
   template<typename PointT>
   void create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
@@ -65,18 +67,36 @@ private:
 };
 
 template<typename PointT>
-void MeshSampling::Impl::create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path)
+std::string MeshSampling::Impl::create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path)
 {
   if(cloud.empty())
   {
     throw std::invalid_argument("create_convex: input cloud is empty.");
   }
 
-  FILE * fout = fopen(out_path.c_str(), "w");
-  if(fout == nullptr)
+  char * buffer = nullptr;
+  size_t size = 0;
+  FILE * out_stream = open_memstream(&buffer, &size);
+
+  if(out_stream == nullptr)
   {
-    throw std::invalid_argument("create_convex: could not open file :" + out_path.string());
+    throw std::runtime_error("create_convex: failed to open memory stream.");
   }
+
+  // Create Qhull object
+  Qhull qhull;
+
+  std::ofstream ofs;
+  if(!out_path.empty()){
+    ofs.open(out_path.c_str());
+
+    if(!ofs.is_open())
+    {
+      throw std::invalid_argument("create_convex: could not open file :" + out_path.string());
+    }
+  }
+
+  qhull.qh()->fout = out_stream;
 
   // Convert PCL cloud to a flat array for Qhull input
   std::vector<double> qhull_input;
@@ -87,21 +107,28 @@ void MeshSampling::Impl::create_convex(const pcl::PointCloud<PointT> & cloud, co
     qhull_input.push_back(pt.z);
   }
 
-  // Create Qhull object
-  Qhull qhull;
-  qhull.qh()->fout = fout;
   try
   {
     qhull.runQhull("pcl_input", 3, cloud.size(), qhull_input.data(), "Qt"); // 3D, triangulate option
+    qhull.outputQhull("o f");
   }
   catch(const std::exception & e)
   {
+    fclose(out_stream);
+    free(buffer);
     throw std::runtime_error(std::string("Qhull run failed: ") + e.what());
   }
 
-  qhull.outputQhull("o f");
+  fclose(out_stream);
+  std::string output(buffer, size);
+  free(buffer);
 
-  std::cout << "Convex file saved to " << out_path << std::endl;
+  if (!out_path.empty()) {
+    ofs << output;
+    std::cout << "Convex file saved to " << out_path << std::endl;
+  }
+
+  return output;
 }
 
 template<typename PointT>

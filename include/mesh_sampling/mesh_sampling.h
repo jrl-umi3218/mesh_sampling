@@ -81,7 +81,7 @@ public:
    * @param out_path output directory
    */
   template<typename PointT = pcl::PointXYZ>
-  void create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path);
+  std::string create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path = {});
 
   template<typename PointT = pcl::PointXYZ>
   void create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
