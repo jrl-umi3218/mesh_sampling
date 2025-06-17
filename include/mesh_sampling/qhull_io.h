@@ -3,17 +3,18 @@
  */
 
 #pragma once
+#include <Eigen/Core>
 #include <fstream>
-#include <pcl/point_cloud.h>
-#include <string>
-
+#include <vector>
 namespace mesh_sampling
 {
+
+using CloudT = std::vector<Eigen::Vector3f>;
 namespace io
 {
 
 template<typename PointT>
-bool saveQhullFile(const std::string & path, const pcl::PointCloud<PointT> & cloud)
+bool saveQhullFile(const std::string & path, const CloudT & cloud)
 {
   std::ofstream file;
   file.open(path, std::ios::out);
@@ -26,7 +27,7 @@ bool saveQhullFile(const std::string & path, const pcl::PointCloud<PointT> & clo
   file << std::to_string(cloud.size()) << std::endl;
   for(const auto & point : cloud)
   {
-    file << point.x << " " << point.y << " " << point.z << std::endl;
+    file << point.x() << " " << point.y() << " " << point.z() << std::endl;
   }
 
   return true;

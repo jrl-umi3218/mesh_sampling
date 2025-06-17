@@ -9,9 +9,6 @@
 #include <mesh_sampling/assimp_scene.h>
 #include <mesh_sampling/mesh_sampling.h>
 #include <mesh_sampling/weighted_random_sampling.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/io/ply_io.h>
-#include <pcl/point_types.h>
 
 #ifndef PROJECT_SOURCE_DIR
 #  error "PROJECT_SOURCE_DIR must be defined to compile this file"
@@ -32,20 +29,20 @@ BOOST_AUTO_TEST_CASE(TestWeightedRandomSampling)
   MeshSampling sampler(model_path);
 
   std::cout << "Sampling " << N << " points from " << model_path << std::endl;
-  WeightedRandomSampling<pcl::PointXYZ> sampling_xyz(sampler.mesh(model_path)->scene());
+  WeightedRandomSampling sampling_xyz(sampler.mesh(model_path)->scene());
   auto cloud_xyz = sampling_xyz.weighted_random_sampling(N);
-  pcl::io::savePCDFileASCII("/tmp/example_xyz.pcd", *cloud_xyz);
+  // pcl::io::savePCDFileASCII("/tmp/example_xyz.pcd", *cloud_xyz);
   BOOST_REQUIRE(cloud_xyz->size() == N);
 
-  WeightedRandomSampling<pcl::PointXYZRGB> sampling_rgb(sampler.mesh(model_path)->scene());
+  WeightedRandomSampling sampling_rgb(sampler.mesh(model_path)->scene());
   auto cloud_rgb = sampling_rgb.weighted_random_sampling(N);
   BOOST_REQUIRE(cloud_rgb->size() == N);
 
-  WeightedRandomSampling<pcl::PointNormal> sampling_normal(sampler.mesh(model_path)->scene());
+  WeightedRandomSampling sampling_normal(sampler.mesh(model_path)->scene());
   auto cloud_normal = sampling_normal.weighted_random_sampling(N);
   BOOST_REQUIRE(cloud_normal->size() == N);
 
-  WeightedRandomSampling<pcl::PointXYZRGBNormal> sampling_rgb_normal(sampler.mesh(model_path)->scene());
+  WeightedRandomSampling sampling_rgb_normal(sampler.mesh(model_path)->scene());
   auto cloud_rgb_normal = sampling_rgb_normal.weighted_random_sampling(N);
   BOOST_REQUIRE(cloud_rgb_normal->size() == N);
 }

@@ -64,18 +64,18 @@ int main(int argc, char ** argv)
     }
     else if(cloud_type == "xyz_rgb")
     {
-      auto mesh = mesh_sampler.create_clouds<pcl::PointXYZRGB>(N, out, ".qc", binary_format);
-      if(!convex.empty()) mesh_sampler.create_convexes<pcl::PointXYZRGB>(mesh, convex);
+      auto mesh = mesh_sampler.create_clouds(N, out, ".qc", binary_format);
+      if(!convex.empty()) mesh_sampler.create_convexes(mesh, convex);
     }
     else if(cloud_type == "xyz_normal")
     {
-      auto mesh = mesh_sampler.create_clouds<pcl::PointNormal>(N, out, ".qc", binary_format);
-      if(!convex.empty()) mesh_sampler.create_convexes<pcl::PointNormal>(mesh, convex);
+      auto mesh = mesh_sampler.create_clouds(N, out, ".qc", binary_format);
+      if(!convex.empty()) mesh_sampler.create_convexes(mesh, convex);
     }
     else if(cloud_type == "xyz_rgb_normal")
     {
-      auto mesh = mesh_sampler.create_clouds<pcl::PointXYZRGBNormal>(N, out, ".qc", binary_format);
-      if(!convex.empty()) mesh_sampler.create_convexes<pcl::PointXYZRGBNormal>(mesh, convex);
+      auto mesh = mesh_sampler.create_clouds(N, out, ".qc", binary_format);
+      if(!convex.empty()) mesh_sampler.create_convexes(mesh, convex);
     }
   }
   return 0;

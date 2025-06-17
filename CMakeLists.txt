@@ -10,12 +10,10 @@ set(CXX_DISABLE_WERROR 1)
 set(CMAKE_CXX_STANDARD 17)
 
 include(cmake/base.cmake)
-include(cmake/eigen.cmake)
-search_for_eigen()
 
 project(
   ${PROJECT_NAME}
-  LANGUAGES C CXX
+  LANGUAGES CXX
   VERSION ${PROJECT_VERSION})
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
 
@@ -32,15 +30,8 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
 #
 # For now, manually add those to the mesh_samplingConfig.cmake script
 find_package(mesh_sampling_3rd_party_assimp REQUIRED)
-find_package(mesh_sampling_3rd_party_PCL REQUIRED)
-
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(Qhull REQUIRED)
-
-# Export scripts to find the custom PCL/assimp dependencies
-install(
-  FILES CMakeModules/Findmesh_sampling_3rd_party_PCL.cmake
-  DESTINATION lib/cmake/mesh_sampling
-  RENAME mesh_sampling_3rd_party_PCLConfig.cmake)
 
 install(
   FILES CMakeModules/Findmesh_sampling_3rd_party_assimp.cmake
@@ -50,8 +41,7 @@ install(
 # Export custom package dependencies to the mesh_samplingConfig script such that
 # they are found when importing the package with find_package(mesh_sampling)
 set(PACKAGE_EXTRA_MACROS
-    "include(\"\$\{CMAKE_CURRENT_LIST_DIR\}/mesh_sampling_3rd_party_assimpConfig.cmake\")
-include(\"\$\{CMAKE_CURRENT_LIST_DIR\}/mesh_sampling_3rd_party_PCLConfig.cmake\")"
+    "include(\"\$\{CMAKE_CURRENT_LIST_DIR\}/mesh_sampling_3rd_party_assimpConfig.cmake\")"
 )
 
 add_subdirectory(src)
@@ -60,3 +50,5 @@ add_subdirectory(utils)
 if(${BUILD_TESTING})
   add_subdirectory(tests)
 endif()
+
+add_subdirectory(CMakeConfig)

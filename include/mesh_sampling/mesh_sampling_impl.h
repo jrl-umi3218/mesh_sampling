@@ -12,11 +12,6 @@
 #include <mesh_sampling/mesh_sampling.h>
 #include <mesh_sampling/qhull_io.h>
 #include <mesh_sampling/weighted_random_sampling.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/io/ply_io.h>
-#include <pcl/io/vtk_lib_io.h>
-#include <pcl/surface/convex_hull.h>
-#include <string>
 //clang-format on
 
 using namespace mesh_sampling;
@@ -25,6 +20,7 @@ using namespace orgQhull;
 namespace mesh_sampling
 {
 
+  using CloudT = std::vector<Eigen::Vector3f>;
 class MeshSampling::Impl
 {
 public:
@@ -32,27 +28,22 @@ public:
 
   void load(const fs::path & in_path, float scale);
 
-  template<typename PointT>
-  pcl::PointCloud<PointT> cloud(const unsigned N);
+  CloudT cloud(const unsigned N);
 
-  template<typename PointT>
-  pcl::PointCloud<PointT> create_cloud(const aiScene * scene, unsigned N, const fs::path & out_path, bool binary_mode);
+  CloudT create_cloud(const aiScene * scene, unsigned N, const fs::path & out_path, bool binary_mode);
 
   bool check_supported(const std::string & type, const std::vector<std::string> & supported = supported_cloud_type);
 
   void convertTo(const fs::path & out_path, bool binary);
 
-  template<typename PointT>
-  std::map<std::string, pcl::PointCloud<PointT>> create_clouds(unsigned N,
+  std::map<std::string, CloudT> create_clouds(unsigned N,
                                                                const fs::path & out_path,
                                                                const std::string & extension,
                                                                bool binary_mode);
 
-  template<typename PointT>
-  std::string create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path);
+  std::string create_convex(const CloudT & cloud, const fs::path & out_path);
 
-  template<typename PointT>
-  std::map<std::string, std::string> create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
+  std::map<std::string, std::string> create_convexes(const std::map<std::string,CloudT> & clouds,
                        const fs::path & out_path,
                        bool stop_on_fail);
 
@@ -67,8 +58,7 @@ private:
   std::map<std::string, std::shared_ptr<ASSIMPScene>> meshes_; //
 };
 
-template<typename PointT>
-std::string MeshSampling::Impl::create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path)
+std::string MeshSampling::Impl::create_convex(const CloudT & cloud, const fs::path & out_path)
 {
   if(cloud.empty())
   {
@@ -103,9 +93,9 @@ std::string MeshSampling::Impl::create_convex(const pcl::PointCloud<PointT> & cl
   std::vector<double> qhull_input;
   for(const auto & pt : cloud)
   {
-    qhull_input.push_back(pt.x);
-    qhull_input.push_back(pt.y);
-    qhull_input.push_back(pt.z);
+    qhull_input.push_back(pt.x());
+    qhull_input.push_back(pt.y());
+    qhull_input.push_back(pt.z());
   }
 
   try
@@ -132,8 +122,7 @@ std::string MeshSampling::Impl::create_convex(const pcl::PointCloud<PointT> & cl
   return output;
 }
 
-template<typename PointT>
-std::map<std::string, std::string> MeshSampling::Impl::create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
+std::map<std::string, std::string> MeshSampling::Impl::create_convexes(const std::map<std::string, CloudT> & clouds,
                                          const fs::path & out_path,
                                          bool stop_on_fail)
 {
@@ -164,13 +153,12 @@ std::map<std::string, std::string> MeshSampling::Impl::create_convexes(const std
   return output;
 }
 
-template<typename PointT>
-std::map<std::string, pcl::PointCloud<PointT>> MeshSampling::Impl::create_clouds(unsigned N,
+std::map<std::string, CloudT> MeshSampling::Impl::create_clouds(unsigned N,
                                                                                  const fs::path & out_path,
                                                                                  const std::string & extension,
                                                                                  bool binary_mode)
 {
-  std::map<std::string, pcl::PointCloud<PointT>> clouds;
+  std::map<std::string, CloudT> clouds;
   if(!out_path.empty())
   {
     if(!fs::is_directory(out_path) && meshes_.size() > 1)
@@ -190,7 +178,7 @@ std::map<std::string, pcl::PointCloud<PointT>> MeshSampling::Impl::create_clouds
     {
       auto path = fs::is_directory(out_path) ? out_path / (fs::path(mesh.first).filename().stem().string() + extension)
                                              : out_path;
-      auto cloud = create_cloud<PointT>(mesh.second->scene(), N, path, binary_mode);
+      auto cloud = create_cloud(mesh.second->scene(), N, path, binary_mode);
       clouds.insert({mesh.first, cloud});
     }
   }
@@ -198,7 +186,7 @@ std::map<std::string, pcl::PointCloud<PointT>> MeshSampling::Impl::create_clouds
   {
     for(const auto & mesh : meshes_)
     {
-      auto cloud = create_cloud<PointT>(mesh.second->scene(), N, {}, binary_mode);
+      auto cloud = create_cloud(mesh.second->scene(), N, {}, binary_mode);
       clouds.insert({mesh.first, cloud});
     }
   }
@@ -206,91 +194,89 @@ std::map<std::string, pcl::PointCloud<PointT>> MeshSampling::Impl::create_clouds
   return clouds;
 }
 
-template<typename PointT>
-pcl::PointCloud<PointT> MeshSampling::Impl::cloud(const unsigned N)
+CloudT MeshSampling::Impl::cloud(const unsigned N)
 {
-  WeightedRandomSampling<PointT> sampler(meshes_.begin()->second->scene());
+  WeightedRandomSampling sampler(meshes_.begin()->second->scene());
   auto cloud = sampler.weighted_random_sampling(N);
   return *cloud;
 }
 
-template<typename PointT>
-pcl::PointCloud<PointT> MeshSampling::Impl::create_cloud(const aiScene * scene,
+CloudT MeshSampling::Impl::create_cloud(const aiScene * scene,
                                                          const unsigned N,
                                                          const fs::path & out_path,
                                                          bool binary_mode)
 {
-  WeightedRandomSampling<PointT> sampler(scene);
+  WeightedRandomSampling sampler(scene);
   auto cloud = sampler.weighted_random_sampling(N);
 
   if(!out_path.empty() && !fs::is_directory(out_path))
   {
     auto extension = boost::algorithm::to_lower_copy(out_path.extension().string());
     bool success = true;
-    if(extension == ".pcd")
-    {
-      success = pcl::io::savePCDFile(out_path, *cloud, binary_mode) == 0;
-    }
-    else if(extension == ".ply")
-    {
-      success = pcl::io::savePLYFile(out_path, *cloud, binary_mode) == 0;
-    }
-    else if(extension == ".qc")
-    {
-      success = mesh_sampling::io::saveQhullFile(out_path, *cloud);
-    }
-    else if(extension == ".stl")
-    {
-      pcl::ConvexHull<PointT> convex{};
-      const auto shared_cloud = typename pcl::PointCloud<PointT>::ConstPtr(cloud.release());
-      convex.setInputCloud(shared_cloud);
-      pcl::PolygonMesh mesh;
-      convex.reconstruct(mesh);
-      pcl::PointCloud<PointT> cloud{};
-      pcl::fromPCLPointCloud2(mesh.cloud, cloud);
+//     if(extension == ".pcd")
+//     {
+//       success = pcl::io::savePCDFile(out_path, *cloud, binary_mode) == 0;
+//     }
+//     else if(extension == ".ply")
+//     {
+//       success = pcl::io::savePLYFile(out_path, *cloud, binary_mode) == 0;
+//     }
+//     else if(extension == ".qc")
+//     {
+//       success = mesh_sampling::io::saveQhullFile(out_path, *cloud);
+//     }
+//     else if(extension == ".stl")
+//     {
+//       pcl::ConvexHull<PointT> convex{};
+//       const auto shared_cloud = typename pcl::PointCloud<PointT>::ConstPtr(cloud.release());
+//       convex.setInputCloud(shared_cloud);
+//       pcl::PolygonMesh mesh;
+//       convex.reconstruct(mesh);
+//       pcl::PointCloud<PointT> cloud{};
+//       pcl::fromPCLPointCloud2(mesh.cloud, cloud);
 
-      // Compute the convex center
-      Eigen::Vector3f center = Eigen::Vector3f::Zero();
-      for(auto & poly : mesh.polygons)
-      {
-        if(poly.vertices.size() != 3)
-        {
-          throw std::runtime_error("pcl::ConvexHull did not reconstruct a triangular mesh");
-        }
-        center += (cloud[poly.vertices[0]].getVector3fMap() + cloud[poly.vertices[1]].getVector3fMap()
-                   + cloud[poly.vertices[2]].getVector3fMap())
-                  / (3 * mesh.polygons.size());
-      }
+//       // Compute the convex center
+//       Eigen::Vector3f center = Eigen::Vector3f::Zero();
+//       for(auto & poly : mesh.polygons)
+//       {
+//         if(poly.vertices.size() != 3)
+//         {
+//           throw std::runtime_error("pcl::ConvexHull did not reconstruct a triangular mesh");
+//         }
+//         center += (cloud[poly.vertices[0]].getVector3fMap() + cloud[poly.vertices[1]].getVector3fMap()
+//                    + cloud[poly.vertices[2]].getVector3fMap())
+//                   / (3 * mesh.polygons.size());
+//       }
 
-      // Make sure all normals point away from the mesh center
-      // Since the mesh is convex this is enough to ensure the normals are consistent
-      for(auto & poly : mesh.polygons)
-      {
-        Eigen::Vector3f p1 = cloud[poly.vertices[0]].getVector3fMap();
-        Eigen::Vector3f p2 = cloud[poly.vertices[1]].getVector3fMap();
-        Eigen::Vector3f p3 = cloud[poly.vertices[2]].getVector3fMap();
-        Eigen::Vector3f n = (p2 - p1).cross(p3 - p1);
-        if(n.dot(center - p1) > 0)
-        {
-          std::swap(poly.vertices[1], poly.vertices[2]);
-        }
-      }
-#if PCL_VERSION_COMPARE(>=, 1, 8, 0)
-      success = pcl::io::savePolygonFileSTL(out_path, mesh, binary_mode);
-#else
-      success = pcl::io::savePolygonFileSTL(out, mesh);
-#endif
-    }
-    else
-    {
-      std::cerr << "Output pointcloud type " << extension << " is not supported";
-      return pcl::PointCloud<PointT>();
-    }
+//       // Make sure all normals point away from the mesh center
+//       // Since the mesh is convex this is enough to ensure the normals are consistent
+//       for(auto & poly : mesh.polygons)
+//       {
+//         Eigen::Vector3f p1 = cloud[poly.vertices[0]].getVector3fMap();
+//         Eigen::Vector3f p2 = cloud[poly.vertices[1]].getVector3fMap();
+//         Eigen::Vector3f p3 = cloud[poly.vertices[2]].getVector3fMap();
+//         Eigen::Vector3f n = (p2 - p1).cross(p3 - p1);
+//         if(n.dot(center - p1) > 0)
+//         {
+//           std::swap(poly.vertices[1], poly.vertices[2]);
+//         }
+//       }
+// #if PCL_VERSION_COMPARE(>=, 1, 8, 0)
+//       success = pcl::io::savePolygonFileSTL(out_path, mesh, binary_mode);
+// #else
+//       success = pcl::io::savePolygonFileSTL(out, mesh);
+// #endif
+//     }
+//     else
+//     {
+//       std::cerr << "Output pointcloud type " << extension << " is not supported";
+//       return pcl::PointCloud<PointT>();
+//     }
 
     if(!success)
     {
       std::cerr << "Saving to " << out_path << " failed." << std::endl;
-      return pcl::PointCloud<PointT>();
+      return {};
     }
     else
     {

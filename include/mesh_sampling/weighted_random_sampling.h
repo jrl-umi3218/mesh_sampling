@@ -7,13 +7,12 @@
 #include <algorithm>
 #include <assimp/scene.h> // Output data structure
 #include <memory>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 #include <random>
 #include <vector>
 
 namespace mesh_sampling
 {
+
 double triangle_area(const Eigen::Vector3f & v1, const Eigen::Vector3f & v2, const Eigen::Vector3f & v3);
 Eigen::Vector3f random_point_in_triangle(const Eigen::Vector3f & v1,
                                          const Eigen::Vector3f & v2,
@@ -71,10 +70,10 @@ std::vector<SampleT> weighted_random_choice(const std::vector<SampleT> & samples
  * https://github.com/daavoo/pyntcloud/blob/master/pyntcloud/samplers/s_mesh.py
  * https://medium.com/@daviddelaiglesiacastro/3f-point-cloud-generation-from-3f-triangular-mesh-bbb602ecf238
  */
-template<typename PointT>
+
 class WeightedRandomSampling
 {
-  using CloudT = pcl::PointCloud<PointT>;
+  using CloudT = std::vector<Eigen::Vector3f>;
 
 private:
   const aiScene * scene;
@@ -191,61 +190,6 @@ public:
   }
 
   /**
-   * @brief This function computes and fill the point color only if the PointT
-   * supports it (PointXYZRGB...)
-   *
-   * @param[out] p point to fill
-   * @param[in] idx triangle id
-   *
-   * @return
-   */
-  template<class Q = PointT>
-  typename std::enable_if<pcl::traits::has_color<Q>::value, void>::type fill_color(PointT & p, const size_t idx)
-  {
-    // HAS COLOR
-    const Eigen::Vector3f color = random_point_in_triangle(v1_rgb[idx], v2_rgb[idx], v3_rgb[idx]);
-    p.r = static_cast<uint8_t>(color.x());
-    p.g = static_cast<uint8_t>(color.y());
-    p.b = static_cast<uint8_t>(color.z());
-  }
-
-  // Does nothing if the PointT does not support colors
-  template<class Q = PointT>
-  typename std::enable_if<!pcl::traits::has_color<Q>::value, void>::type fill_color(PointT & /*p*/,
-                                                                                    const size_t /*idx*/)
-  {
-  }
-
-  /**
-   * @brief This function computes and fill the point normals only if the PointT
-   * supports it (PointNormal, PointXYZRGBNormal...)
-   *
-   * @param[out] p point to fill
-   * @param[in] idx triangle id
-   *
-   * @return void
-   */
-  template<class Q = PointT>
-  typename std::enable_if<pcl::traits::has_normal<Q>::value, void>::type fill_normal(PointT & p, const size_t idx)
-  {
-    const auto & n1 = v1_normal[idx];
-    const auto & n2 = v2_normal[idx];
-    const auto & n3 = v3_normal[idx];
-    Eigen::Vector3f n = (n1 + n2 + n3).normalized();
-
-    p.normal_x = n.x();
-    p.normal_y = n.y();
-    p.normal_z = n.z();
-  }
-
-  // Does nothing if the PointT does not support colors
-  template<class Q = PointT>
-  typename std::enable_if<!pcl::traits::has_normal<Q>::value, void>::type fill_normal(PointT & /*p*/,
-                                                                                      const size_t /*idx*/)
-  {
-  }
-
-  /**
    * @brief Compute a weighted random sampling of the scene.
    *
    * @param N Number of samples
@@ -273,14 +217,7 @@ public:
     cloud->reserve(static_cast<uint32_t>(N));
     for(const auto idx : random_idx)
     {
-      const Eigen::Vector3f point = random_point_in_triangle(v1_xyz[idx], v2_xyz[idx], v3_xyz[idx]);
-      PointT p;
-      p.x = point.x();
-      p.y = point.y();
-      p.z = point.z();
-      fill_color(p, idx);
-      fill_normal(p, idx);
-      cloud->push_back(p);
+      cloud->push_back(random_point_in_triangle(v1_xyz[idx], v2_xyz[idx], v3_xyz[idx]));
     }
 
     return cloud;

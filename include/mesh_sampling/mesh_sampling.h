@@ -1,9 +1,9 @@
 #pragma once
 
+#include <Eigen/Core>
 #include <filesystem>
 #include <map>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
+#include <vector>
 
 class aiScene;
 
@@ -12,6 +12,8 @@ namespace fs = std::filesystem;
 namespace mesh_sampling
 {
 struct ASSIMPScene;
+
+using CloudT = std::vector<Eigen::Vector3f>;
 
 const auto supported_cloud_type = std::vector<std::string>{"xyz", "xyz_rgb", "xyz_normal", "xyz_rgb_normal"};
 const auto supported_extensions = std::vector<std::string>{".ply", ".pcd", ".qc", ".stl"};
@@ -38,8 +40,7 @@ public:
    * @param N number of sampling points (default: 2000)
    * @return pcl::PointCloud<PointT>
    */
-  template<typename PointT = pcl::PointXYZ>
-  pcl::PointCloud<PointT> cloud(const unsigned N = 2000);
+  CloudT cloud(const unsigned N = 2000);
 
   /**
    * @brief Create and save a pointcloud
@@ -51,11 +52,7 @@ public:
    * @param binary_mode is binary (default: false)
    * @return pcl::PointCloud<PointT>
    */
-  template<typename PointT = pcl::PointXYZ>
-  pcl::PointCloud<PointT> create_cloud(const aiScene * scene,
-                                       unsigned N,
-                                       const fs::path & out_path = {},
-                                       bool binary_mode = false);
+  CloudT create_cloud(const aiScene * scene, unsigned N, const fs::path & out_path = {}, bool binary_mode = false);
 
   /**
    * @brief Create and save pointclouds, to be used when importing meshes from a directory. If out_path is empty clouds
@@ -67,11 +64,10 @@ public:
    * @param extension saving extension (default: ".qc")
    * @param binary_mode is binary mnode (default: false)
    */
-  template<typename PointT = pcl::PointXYZ>
-  std::map<std::string, pcl::PointCloud<PointT>> create_clouds(unsigned N,
-                                                               const fs::path & out_path = {},
-                                                               const std::string & extension = ".qc",
-                                                               bool binary_mode = false);
+  std::map<std::string, CloudT> create_clouds(unsigned N,
+                                              const fs::path & out_path = {},
+                                              const std::string & extension = ".qc",
+                                              bool binary_mode = false);
 
   /**
    * @brief Create a convex object using qhull library and save it to a file
@@ -80,11 +76,9 @@ public:
    * @param cloud PCL point cloud
    * @param out_path output directory
    */
-  template<typename PointT = pcl::PointXYZ>
-  std::string create_convex(const pcl::PointCloud<PointT> & cloud, const fs::path & out_path = {});
+  std::string create_convex(const CloudT & cloud, const fs::path & out_path = {});
 
-  template<typename PointT = pcl::PointXYZ>
-  std::map<std::string, std::string> create_convexes(const std::map<std::string, pcl::PointCloud<PointT>> & clouds,
+  std::map<std::string, std::string> create_convexes(const std::map<std::string, CloudT> & clouds,
                                                      const fs::path & out_path = {},
                                                      bool stop_on_fail = true);
 

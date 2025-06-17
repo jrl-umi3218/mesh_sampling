@@ -1,12 +1,12 @@
 add_library(mesh_sampling SHARED mesh_sampling.cpp weighted_random_sampling.cpp)
 
 target_link_libraries(
-  mesh_sampling PUBLIC mesh_sampling::assimp mesh_sampling::PCL Qhull::qhullcpp
-                       Qhull::qhull_r)
+  mesh_sampling PUBLIC mesh_sampling::assimp Qhull::qhullcpp Qhull::qhull_r
+                       Eigen3::Eigen)
 
 target_include_directories(
   mesh_sampling PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
-                       $<INSTALL_INTERFACE:include>)
+                       $<INSTALL_INTERFACE:include> ${Eigen_INCLUDE_DIR})
 
 target_include_directories(mesh_sampling
                            PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/ext>)
