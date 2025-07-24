@@ -31,8 +31,7 @@ sudo apt install libmesh-sampling-dev
 Requirements:
 - cmake >3.11
 - Eigen3
-- PCL 1.7
-- Boost (program_options and filesystem)
+- Boost (libboost-dev)
 
 If you do not already have a recent cmake installation (>3.11), you will need to install it. On Ubuntu bionic, this can be done by adding the official [Kitware PPA](https://apt.kitware.com/), and updating cmake
 
