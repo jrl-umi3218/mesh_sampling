@@ -14,7 +14,8 @@ Build-Depends: debhelper (>= 9),
                libproj-dev,
                doxygen,
                libeigen3-dev (>= 3.2),
-               libgtest-dev
+               libgtest-dev,
+               libqhull-r8.0
 
 Package: libmesh-sampling-dev
 Section: libdevel
@@ -25,6 +26,7 @@ Depends: pkg-config,
          libassimp-dev,
          libproj-dev,
          libgtest-dev,
+         libqhull-r8.0,
          ${misc:Depends}
 Description: mesh_sampling Automatic sampling of 3D pointcloud from CAD models
  mesh_sampling implements samplers that convert from 3D CAD models to PCL pointcloud (PCD)

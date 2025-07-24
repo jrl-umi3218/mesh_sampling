@@ -32,6 +32,7 @@ Requirements:
 - cmake >3.11
 - Eigen3
 - Boost (libboost-dev)
+- libqhull-r8.0
 
 If you do not already have a recent cmake installation (>3.11), you will need to install it. On Ubuntu bionic, this can be done by adding the official [Kitware PPA](https://apt.kitware.com/), and updating cmake
 
