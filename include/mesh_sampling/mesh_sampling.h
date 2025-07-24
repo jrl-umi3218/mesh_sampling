@@ -108,7 +108,7 @@ public:
 
 private:
   class Impl;
-  std::unique_ptr<Impl> impl_;
+  std::map<std::string, std::shared_ptr<ASSIMPScene>> meshes_;
 };
 
 }; // namespace mesh_sampling
