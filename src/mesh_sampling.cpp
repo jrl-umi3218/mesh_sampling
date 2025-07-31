@@ -261,10 +261,12 @@ void MeshSampling::load(const fs::path & in_path, float scale)
   {
     if(fs::is_directory(in_path))
     {
-      for(const auto & dir_entry : std::filesystem::directory_iterator{in_path})
-        if(check_supported(dir_entry.path().extension(), supported_extensions))
+      for(const auto & dir_entry : std::filesystem::directory_iterator{in_path}){
+        if(check_supported(dir_entry.path().extension(), supported_extensions)){
           meshes_.insert(
-              std::make_pair(dir_entry.path(), std::make_shared<ASSIMPScene>(dir_entry.path().string(), scale)));
+              std::make_pair(dir_entry.path(), std::make_shared<ASSIMPScene>(dir_entry.path(), scale)));
+        }
+      }
     }
     else
     {
