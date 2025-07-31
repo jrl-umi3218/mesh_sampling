@@ -133,15 +133,12 @@ std::map<std::string, CloudT> MeshSampling::create_clouds(unsigned N,
   {
     if(!fs::is_directory(out_path) && meshes_.size() > 1)
     {
-      std::cerr << "[Error] create_clouds, out_path is not a directory" << std::endl;
-      ;
-      return {};
+      throw std::runtime_error("[Error] create_clouds, out_path is not a directory");
     }
 
     if(extension.empty())
     {
-      std::cerr << "[Error] create_clouds, extension is not set" << std::endl;
-      return {};
+      throw std::runtime_error("[Error] create_clouds, extension is not set");
     }
 
     for(const auto & mesh : meshes_)
