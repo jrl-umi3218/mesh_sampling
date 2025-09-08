@@ -52,4 +52,7 @@ jobs:
       shell: bash
       run: |
         set -x
+        export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+        export CMAKE_PREFIX_PATH="/usr/lib/x86_64-linux-gnu/cmake:${CMAKE_PREFIX_PATH}"
+
         ./.github/workflows/scripts/test-usage.sh ${{ matrix.build-type }}
