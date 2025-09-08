@@ -1,6 +1,7 @@
 #include "mesh_sampling/mesh_sampling.h"
 
 // clang-format off
+#include <filesystem>
 #include <libqhullcpp/Qhull.h>
 #include <libqhullcpp/QhullFacetSet.h>
 #include <libqhullcpp/QhullLinkedList.h>
@@ -98,7 +99,7 @@ std::map<std::string, std::string> MeshSampling::create_convexes(const std::map<
 {
   if(!out_path.empty() && !fs::is_directory(out_path))
   {
-    throw std::invalid_argument("create_convexes: out_path has to be a directory");
+    throw std::invalid_argument("create_convexes: out_path has to be a directory {" + out_path.string() + "}");
   }
 
   std::map<std::string, std::string> output;
@@ -287,12 +288,9 @@ void MeshSampling::convertTo(const fs::path & out_path, bool binary)
 
 bool MeshSampling::check_supported(const std::string & type, const std::vector<std::string> & supported)
 {
-  if(std::find(supported.begin(), supported.end(), type) == supported.end())
-  {
-    return false;
-  }
-
-  return true;
+  return std::any_of(supported.begin(), supported.end(),
+                     [&](const std::string & ext) { return std::equal(ext.begin(), ext.end(), type.begin(), type.end(),
+                      [](char a, char b) { return std::tolower(a) == std::tolower(b); }); });
 }
 
 ASSIMPScene * MeshSampling::mesh(const std::string & path)
