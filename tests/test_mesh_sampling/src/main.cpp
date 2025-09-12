@@ -58,17 +58,13 @@ int main(int argc, char ** argv)
   std::cout << "Sampling " << N << " points from " << model_path << std::endl;
   WeightedRandomSampling sampling_xyz(sampler.mesh(model_path)->scene());
   auto cloud_xyz = sampling_xyz.weighted_random_sampling(N);
-  // pcl::io::savePCDFileASCII("/tmp/example_xyz.pcd", *cloud_xyz);
 
   WeightedRandomSampling sampling_rgb(sampler.mesh(model_path)->scene());
   auto cloud_rgb = sampling_rgb.weighted_random_sampling(N);
-  // pcl::io::savePCDFileASCII("/tmp/example_rgb.pcd", *cloud_rgb);
 
   WeightedRandomSampling sampling_normal(sampler.mesh(model_path)->scene());
   auto cloud_normal = sampling_normal.weighted_random_sampling(N);
-  // pcl::io::savePCDFileASCII("/tmp/example_normal.pcd", *cloud_normal);
 
   WeightedRandomSampling sampling_rgb_normal(sampler.mesh(model_path)->scene());
   auto cloud_rgb_normal = sampling_rgb_normal.weighted_random_sampling(N);
-  // pcl::io::savePCDFileASCII("/tmp/example_rgb_normal.pcd", *cloud_rgb_normal);
 }

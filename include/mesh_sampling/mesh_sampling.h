@@ -16,14 +16,14 @@ struct ASSIMPScene;
 using CloudT = std::vector<Eigen::Vector3f>;
 
 const auto supported_cloud_type = std::vector<std::string>{"xyz", "xyz_rgb", "xyz_normal", "xyz_rgb_normal"};
-const auto supported_extensions = std::vector<std::string>{".ply", ".pcd", ".qc", ".stl", ".obj", ".dae"};
+const auto supported_extensions = std::vector<std::string>{".ply", ".qc", ".stl", ".obj", ".dae"};
 
 class MeshSampling
 {
 public:
-  MeshSampling();
+  MeshSampling() = default;
   MeshSampling(const fs::path & in_path, float scale = 1);
-  ~MeshSampling();
+  ~MeshSampling() = default;
 
   /**
    * @brief Load mesh from full path or directory

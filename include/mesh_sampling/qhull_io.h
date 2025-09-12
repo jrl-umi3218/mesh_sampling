@@ -13,7 +13,6 @@ using CloudT = std::vector<Eigen::Vector3f>;
 namespace io
 {
 
-template<typename PointT>
 bool saveQhullFile(const std::string & path, const CloudT & cloud)
 {
   std::ofstream file;
