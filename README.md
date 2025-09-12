@@ -17,7 +17,7 @@ It is provided as-is, and could probably be optimized should the need arise. Fee
 
 ## Installation
 
-### From Ubunu packages (18.04, 20.04, 22.04, 24.04)
+### From Ubuntu packages (20.04, 22.04, 24.04)
 
 ```sh
 # Setup the mirror
@@ -31,7 +31,6 @@ sudo apt install libmesh-sampling-dev
 Requirements:
 - cmake >3.11
 - Eigen3
-- Boost (libboost-dev)
 - libqhull-dev
 
 If you do not already have a recent cmake installation (>3.11), you will need to install it. On Ubuntu bionic, this can be done by adding the official [Kitware PPA](https://apt.kitware.com/), and updating cmake
