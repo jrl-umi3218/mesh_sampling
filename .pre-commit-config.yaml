@@ -1,5 +1,6 @@
 ci:
   autoupdate_schedule: quarterly
+exclude: '^ext/'
 repos:
 - repo: meta
   hooks:
@@ -9,7 +10,7 @@ repos:
   rev: v19.1.7
   hooks:
   - id: clang-format
-    'types_or': [c++, c]
+    types_or: [c++, c]
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v5.0.0
   hooks:
