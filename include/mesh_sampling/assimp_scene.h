@@ -1,7 +1,5 @@
 #pragma once
 
-#include <boost/algorithm/string.hpp>
-
 #include <assimp/Exporter.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -44,7 +42,8 @@ struct ASSIMPScene
   void exportScene(const std::string & path, const bool binary = true)
   {
     fs::path out_path(path);
-    auto ext = boost::algorithm::to_lower_copy(out_path.extension().string());
+    auto ext = out_path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return std::tolower(c); });
     if(ext.empty())
     {
       throw std::runtime_error("Could't export scene " + modelPath_ + " to " + path + ": invalid extension");
