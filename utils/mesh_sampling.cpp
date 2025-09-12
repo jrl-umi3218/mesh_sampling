@@ -2,7 +2,7 @@
  * Copyright 2017-2025 CNRS-UM LIRMM, CNRS-AIST JRL
  */
 
-#include <mesh_sampling/CLI11.hpp>
+#include <CLI/CLI.hpp>
 #include <mesh_sampling/mesh_sampling.h>
 
 namespace fs = std::filesystem;
