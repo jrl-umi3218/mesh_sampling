@@ -2,19 +2,13 @@
  * Copyright 2017-2020 CNRS-UM LIRMM, CNRS-AIST JRL
  */
 
-#include "mesh_sampling/weighted_random_sampling.h"
-
+#include <Eigen/Geometry>
 #include <effolkronium/random.hpp>
+#include <mesh_sampling/weighted_random_sampling.h>
 using Random = effolkronium::random_static;
 
 namespace mesh_sampling
 {
-
-// Explicit instantiation for common types
-template class WeightedRandomSampling<pcl::PointXYZ>;
-template class WeightedRandomSampling<pcl::PointXYZRGB>;
-template class WeightedRandomSampling<pcl::PointNormal>;
-template class WeightedRandomSampling<pcl::PointXYZRGBNormal>;
 
 double triangle_area(const Eigen::Vector3f & v1, const Eigen::Vector3f & v2, const Eigen::Vector3f & v3)
 {

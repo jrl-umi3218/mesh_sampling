@@ -18,10 +18,8 @@
 
 #include <iostream>
 #include <mesh_sampling/assimp_scene.h>
+#include <mesh_sampling/mesh_sampling.h>
 #include <mesh_sampling/weighted_random_sampling.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/io/ply_io.h>
-#include <pcl/point_types.h>
 
 using namespace mesh_sampling;
 
@@ -55,36 +53,18 @@ int main(int argc, char ** argv)
     help();
   }
 
-  // ASSIMPScene loader should be used and kept in scope for as long as the mesh
-  // is needed.
-  // The default constructor loads the mesh with all the required
-  // post-processing according to point type (normal computation...)
-  std::unique_ptr<ASSIMPScene> mesh = nullptr;
-  try
-  {
-    mesh = std::unique_ptr<ASSIMPScene>(new ASSIMPScene(model_path));
-  }
-  catch(std::runtime_error & e)
-  {
-    std::cerr << e.what() << std::endl;
-    return -1;
-  }
+  MeshSampling sampler(model_path);
 
   std::cout << "Sampling " << N << " points from " << model_path << std::endl;
-  WeightedRandomSampling<pcl::PointXYZ> sampling_xyz(mesh->scene());
+  WeightedRandomSampling sampling_xyz(sampler.mesh(model_path)->scene());
   auto cloud_xyz = sampling_xyz.weighted_random_sampling(N);
-  pcl::io::savePCDFileASCII("/tmp/example_xyz.pcd", *cloud_xyz);
-  std::cout << "Cloud size: " << cloud_xyz->size() << ", expected: " << N << std::endl;
 
-  WeightedRandomSampling<pcl::PointXYZRGB> sampling_rgb(mesh->scene());
+  WeightedRandomSampling sampling_rgb(sampler.mesh(model_path)->scene());
   auto cloud_rgb = sampling_rgb.weighted_random_sampling(N);
-  pcl::io::savePCDFileASCII("/tmp/example_rgb.pcd", *cloud_rgb);
 
-  WeightedRandomSampling<pcl::PointNormal> sampling_normal(mesh->scene());
+  WeightedRandomSampling sampling_normal(sampler.mesh(model_path)->scene());
   auto cloud_normal = sampling_normal.weighted_random_sampling(N);
-  pcl::io::savePCDFileASCII("/tmp/example_normal.pcd", *cloud_normal);
 
-  WeightedRandomSampling<pcl::PointXYZRGBNormal> sampling_rgb_normal(mesh->scene());
+  WeightedRandomSampling sampling_rgb_normal(sampler.mesh(model_path)->scene());
   auto cloud_rgb_normal = sampling_rgb_normal.weighted_random_sampling(N);
-  pcl::io::savePCDFileASCII("/tmp/example_rgb_normal.pcd", *cloud_rgb_normal);
 }

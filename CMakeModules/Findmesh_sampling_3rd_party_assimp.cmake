@@ -14,10 +14,13 @@ if(NOT TARGET mesh_sampling::assimp)
     message(FATAL_ERROR "Could not find the ASSIMP library")
   endif()
 
-  message(STATUS "Found assimp library: ${assimp_VERSION_MAJOR}.${assimp_VERSION_MINOR}.${assimp_VERSION_PATCH}")
-  add_library(mesh_sampling::assimp INTERFACE IMPORTED)
-  set_target_properties(mesh_sampling::assimp PROPERTIES
-    #INTERFACE_INCLUDE_DIRECTORIES ${ASSIMP_INCLUDE_DIRS}
-    INTERFACE_LINK_LIBRARIES "${ASSIMP_LIBRARIES}"
+  message(
+    STATUS
+      "Found assimp library: ${assimp_VERSION_MAJOR}.${assimp_VERSION_MINOR}.${assimp_VERSION_PATCH}"
   )
+  add_library(mesh_sampling::assimp INTERFACE IMPORTED)
+  set_target_properties(
+    mesh_sampling::assimp
+    PROPERTIES # INTERFACE_INCLUDE_DIRECTORIES ${ASSIMP_INCLUDE_DIRS}
+               INTERFACE_LINK_LIBRARIES "${ASSIMP_LIBRARIES}")
 endif()

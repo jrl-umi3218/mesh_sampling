@@ -9,25 +9,21 @@ Vcs-Browser: http://github.com/arntanguy/mesh_sampling
 Build-Depends: debhelper (>= 9),
                pkg-config,
                cmake,
-               libboost-filesystem-dev,
-               libboost-program-options-dev,
-               libpcl-dev,
                libassimp-dev,
-               libproj-dev,
                doxygen,
-               libeigen3-dev (>= 3.2)
+               libeigen3-dev (>= 3.2),
+               libgtest-dev,
+               libqhull-dev
 
 Package: libmesh-sampling-dev
 Section: libdevel
 Architecture: any
 Depends: pkg-config,
          mesh-sampling (= ${binary:Version}),
-         libboost-filesystem-dev,
-         libboost-program-options-dev,
          libeigen3-dev (>= 3.2),
-         libpcl-dev,
          libassimp-dev,
-         libproj-dev,
+         libgtest-dev,
+         libqhull-dev,
          ${misc:Depends}
 Description: mesh_sampling Automatic sampling of 3D pointcloud from CAD models
  mesh_sampling implements samplers that convert from 3D CAD models to PCL pointcloud (PCD)

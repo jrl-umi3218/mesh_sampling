@@ -10,13 +10,13 @@ on:
 
 jobs:
   clang-format:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Install clang-format
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq install clang-format-10
+        sudo apt-get -qq install clang-format-14
     - name: Run clang-format-check
       run: |
         ./.clang-format-check.sh
@@ -26,13 +26,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-22.04, ubuntu-24.04]
         build-type: [Debug, RelWithDebInfo]
         compiler: [gcc, clang]
 
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     - name: Install dependencies
@@ -41,7 +41,7 @@ jobs:
         compiler: ${{ matrix.compiler }}
         build-type: ${{ matrix.build-type }}
         ubuntu: |
-          apt: libeigen3-dev libpcl-dev libproj-dev libassimp-dev libboost-test-dev doxygen doxygen-latex
+          apt: libeigen3-dev libqhull-dev libproj-dev libassimp-dev libgtest-dev doxygen doxygen-latex
     - name: Build and test
       uses: jrl-umi3218/github-actions/build-cmake-project@master
       with:
@@ -52,4 +52,7 @@ jobs:
       shell: bash
       run: |
         set -x
+        export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+        export CMAKE_PREFIX_PATH="/usr/lib/x86_64-linux-gnu/cmake:${CMAKE_PREFIX_PATH}"
+
         ./.github/workflows/scripts/test-usage.sh ${{ matrix.build-type }}
