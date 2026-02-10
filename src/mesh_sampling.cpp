@@ -16,6 +16,8 @@
 #include <mesh_sampling/weighted_random_sampling.h>
 //clang-format on
 
+#include <mesh_sampling/qhull_io.h>
+
 using namespace orgQhull;
 
 namespace mesh_sampling
@@ -178,7 +180,7 @@ CloudT MeshSampling::create_cloud(const aiScene * scene,
   if(!out_path.empty() && !fs::is_directory(out_path))
   {
     auto extension = out_path.extension().string();
-    bool success = false;
+    bool success = io::saveQhullFile(out_path, *cloud);
 
     if(!success)
     {
