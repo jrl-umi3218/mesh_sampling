@@ -111,7 +111,7 @@ To generate convex files, you need to add `--convex` option to the command line.
 mesh_sampling --in /path/to/model.<supported_mesh_format> --out /tmp/test.qc --convex /path --type xyz --samples 10000
 ```
 
-* From folder (check all files with respect to the supported extensions ".ply", ".pcd", ".qc", ".stl")
+* From folder (check all files with respect to the supported extensions ".ply", ".pcd", ".qc", ".stl", ".dae")
 ```bash
 mesh_sampling --in /path/to/models --out /tmp --convex /tmp --type xyz --samples 10000
 ```
