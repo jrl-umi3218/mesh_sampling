@@ -77,7 +77,7 @@ A simple binary executable `mesh_sampling` is provided. It'll convert any model 
 * From file to file
 
 ```
-mesh_sampling /path/to/model.<supported_mesh_format> --out /path/to/cloud/cloud.<supported_cloud_format> --type xyz_rgb_normal --samples 10000 --binary
+mesh_sampling --in /path/to/model.<supported_mesh_format> --out /path/to/cloud/cloud.<supported_cloud_format> --type xyz_rgb_normal --samples 10000 --binary
 ```
 
 * From folder to folder
