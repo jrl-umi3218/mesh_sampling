@@ -1,10 +1,16 @@
-# FetchCLI11.cmake
-include(FetchContent)
+# Try to find system CLI11 first
+find_package(CLI11 CONFIG QUIET)
 
-FetchContent_Declare(
-  cli11_proj
-  QUIET
-  GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
-  GIT_TAG v2.5.0)
-
-FetchContent_MakeAvailable(cli11_proj)
+if(NOT CLI11_FOUND)
+  include(FetchContent)
+  FetchContent_Declare(
+    cli11_proj
+    QUIET
+    GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
+    GIT_TAG v2.5.0)
+  FetchContent_MakeAvailable(cli11_proj)
+  # Alias target for compatibility if needed
+  if(NOT TARGET CLI11::CLI11 AND TARGET cli11)
+    add_library(CLI11::CLI11 ALIAS cli11)
+  endif()
+endif()
