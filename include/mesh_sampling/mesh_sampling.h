@@ -82,6 +82,11 @@ public:
                                                      const fs::path & out_path = {},
                                                      bool stop_on_fail = true);
 
+  std::string run_qconvex_on_file(const fs::path & cloud_path, const fs::path & convex_path);
+  std::map<std::string, std::string> create_convexes_qconvex(const std::map<std::string, CloudT> & clouds,
+                                           const fs::path & out_path,
+                                           bool stop_on_fail = true);
+
   /**
    * @brief Export all meshes to a file in a format support by ASSIMP
    *
