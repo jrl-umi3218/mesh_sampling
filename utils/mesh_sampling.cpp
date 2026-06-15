@@ -15,10 +15,10 @@ int main(int argc, char ** argv)
   argv = app.ensure_utf8(argv);
 
   fs::path in;
-  app.add_option("--in", in, "Input mesh (supported by ASSIMP)")->required()->check(CLI::ExistingPath);
+  app.add_option("in,--in", in, "Input mesh (supported by ASSIMP)")->required()->check(CLI::ExistingPath);
 
   fs::path out;
-  app.add_option("--out", out, "Output file (ply, pcd, qc, stl)");
+  app.add_option("out,--out", out, "Output file (ply, pcd, qc, stl)");
 
   fs::path convex;
   app.add_option("--convex", convex, "Output convex directory")->check(CLI::ExistingPath);
@@ -42,7 +42,16 @@ int main(int argc, char ** argv)
   app.add_option("--convert", convert, "Convert from one mesh type to another (supported by ASSIMP)")
       ->default_val(false);
 
-  CLI11_PARSE(app, argc, argv);
+  try
+  {
+    app.parse(argc, argv);
+  }
+  catch(const CLI::ParseError & e)
+  {
+    // If parsing fails, print the error, print the help menu, and exit cleanly
+    std::cout << (e.get_exit_code() == 0 ? "" : "Error: ") << e.what() << "\n\n";
+    return app.exit(CLI::CallForHelp());
+  }
 
   MeshSampling mesh_sampler(in);
 
@@ -74,7 +83,8 @@ int main(int argc, char ** argv)
     }
     else
     {
-      std::cerr << "Convex generation only supported for cloud types : xyz, xyz_rgb, xyz_normal, xyz_rgb_normal" << std::endl;
+      std::cerr << "Convex generation only supported for cloud types : xyz, xyz_rgb, xyz_normal, xyz_rgb_normal"
+                << std::endl;
     }
   }
   return 0;
