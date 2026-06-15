@@ -28,7 +28,7 @@ Or clone this repository `gh repo clone jrl-umi3218/mesh_sampling` and:
 - `nix develop .#mesh-sampling` to enter a development shell
   - `cmake -B build $cmakeFlags && cmake --build build` to build
 
-### From Ubuntu packages (22.04, 24.04)
+### From Ubuntu packages (22.04, 24.04, 26.04)
 
 ```sh
 # Setup the mirror
