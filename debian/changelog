@@ -1,3 +1,9 @@
+mesh-sampling (1.1.0-1ubuntu1) unstable; urgency=low
+
+  * Upstream update
+
+ -- Arnaud Tanguy <arn.tanguy+ppa@gmail.com>  Mon, 15 Jun 2026 19:20:00 +0000
+
 mesh-sampling (1.0.0-1ubuntu1) unstable; urgency=low
 
   * Initial release
