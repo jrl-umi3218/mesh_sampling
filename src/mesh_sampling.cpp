@@ -71,6 +71,7 @@ std::string MeshSampling::create_convex(const CloudT & cloud, const fs::path & o
 
   try
   {
+    qhull.setErrorStream(&std::cerr);
     qhull.runQhull("pcl_input", 3, cloud.size(), qhull_input.data(), "Qt"); // 3D, triangulate option
     qhull.outputQhull("o f");
   }
@@ -81,13 +82,76 @@ std::string MeshSampling::create_convex(const CloudT & cloud, const fs::path & o
     throw std::runtime_error(std::string("Qhull run failed: ") + e.what());
   }
 
+  fflush(out_stream);
   fclose(out_stream);
+  if(buffer == nullptr || size <= 0) {
+    std::cout << "Buffer is empty or null.\n";
+    throw std::runtime_error("create_convex: Qhull did not produce any output");
+  }
   std::string output(buffer, size);
   free(buffer);
 
   if (!out_path.empty()) {
     ofs << output;
     std::cout << "Convex file saved to " << out_path << std::endl;
+  }
+
+  return output;
+}
+
+std::string MeshSampling::run_qconvex_on_file(const fs::path & cloud_path, const fs::path & convex_path)
+{
+  // 1. Build the qconvex command
+  std::ostringstream cmd;
+  cmd << "qconvex TI " << cloud_path << " TO " << convex_path << " Qt o f";
+  std::cout << "cmd would be: " << cmd.str() << std::endl;
+
+  // 2. Run the command
+  int ret = std::system(cmd.str().c_str());
+  if(ret != 0)
+  {
+    throw std::runtime_error("run_qconvex_on_file: qconvex failed to run.");
+  }
+
+  // 3. Read and return the output from convex_path (name-ch.txt)
+  std::ifstream ifs(convex_path);
+  if(!ifs.is_open())
+  {
+    throw std::runtime_error("run_qconvex_on_file: could not open output file: " + convex_path.string());
+  }
+  std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+  ifs.close();
+
+  return output;
+}
+
+std::map<std::string, std::string> MeshSampling::create_convexes_qconvex(const std::map<std::string, CloudT> & clouds,
+                                         const fs::path & out_path,
+                                         bool stop_on_fail)
+{
+  if(!out_path.empty() && !fs::is_directory(out_path))
+  {
+    throw std::invalid_argument("create_convexes: out_path has to be a directory {" + out_path.string() + "}");
+  }
+
+  std::map<std::string, std::string> output;
+
+  for(const auto & cloud : clouds)
+  {
+    try
+    {
+      fs::path input_path = cloud.first; // full path to .qc file
+      std::string base = input_path.stem().string(); // e.g., "mesh1"
+      fs::path convex_path = input_path.parent_path() / (base + "-ch.txt");
+
+      output[cloud.first] = run_qconvex_on_file(input_path, convex_path);
+    }
+    catch(const std::exception & e)
+    {
+      std::cerr << e.what() << std::endl;
+
+      if(stop_on_fail) return {};
+    }
   }
 
   return output;
@@ -147,7 +211,7 @@ std::map<std::string, CloudT> MeshSampling::create_clouds(unsigned N,
       auto path = fs::is_directory(out_path) ? out_path / (fs::path(mesh.first).filename().stem().string() + extension)
                                              : out_path;
       auto cloud = create_cloud(mesh.second->scene(), N, path, binary_mode);
-      clouds.insert({mesh.first, cloud});
+      clouds.insert({path.string(), cloud});
     }
   }
   else

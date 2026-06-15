@@ -17,7 +17,18 @@ It is provided as-is, and could probably be optimized should the need arise. Fee
 
 ## Installation
 
-### From Ubuntu packages (20.04, 22.04, 24.04)
+### Nix
+
+Use:
+- `nix run github:jrl-umi3218/mesh-sampling -- <options>` to run the CLI tool
+
+Or clone this repository `gh repo clone jrl-umi3218/mesh_sampling` and:
+- `nix run .#mesh-sampling -- <options>` to run the CLI tool
+- `nix build .#mesh-sampling` to build the project
+- `nix develop .#mesh-sampling` to enter a development shell
+  - `cmake -B build $cmakeFlags && cmake --build build` to build
+
+### From Ubuntu packages (22.04, 24.04, 26.04)
 
 ```sh
 # Setup the mirror
@@ -29,7 +40,7 @@ sudo apt install libmesh-sampling-dev
 ### From source
 
 Requirements:
-- cmake >3.11
+- cmake >3.22
 - Eigen3
 - libqhull-dev
 
