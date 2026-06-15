@@ -52,7 +52,7 @@ add_project_dependency(Qhull REQUIRED)
 
 install(
   FILES CMakeModules/Findmesh_sampling_3rd_party_assimp.cmake
-  DESTINATION lib/cmake/mesh_sampling
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mesh_sampling
   RENAME mesh_sampling_3rd_party_assimpConfig.cmake)
 
 # Export custom package dependencies to the mesh_samplingConfig script such that
