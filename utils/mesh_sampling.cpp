@@ -66,26 +66,8 @@ int main(int argc, char ** argv)
   }
   else
   {
-    if(cloud_type == "xyz")
-    {
-      auto mesh = mesh_sampler.create_clouds(N, out, ".qc", binary_format);
-      if(!convex.empty()) mesh_sampler.create_convexes(mesh, convex);
-    }
-    else if(cloud_type == "xyz_rgb")
-    {
-      auto mesh = mesh_sampler.create_clouds(N, out, ".qc", binary_format);
-      if(!convex.empty()) mesh_sampler.create_convexes(mesh, convex);
-    }
-    else if(cloud_type == "xyz_normal")
-    {
-      auto mesh = mesh_sampler.create_clouds(N, out, ".qc", binary_format);
-      if(!convex.empty()) mesh_sampler.create_convexes(mesh, convex);
-    }
-    else if(cloud_type == "xyz_rgb_normal")
-    {
-      auto mesh = mesh_sampler.create_clouds(N, out, ".qc", binary_format);
-      if(!convex.empty()) mesh_sampler.create_convexes(mesh, convex);
-    }
+    auto mesh = mesh_sampler.create_clouds(N, out, ".qc", binary_format);
+    if(!convex.empty()) mesh_sampler.create_convexes(mesh, convex);
   }
   return 0;
 }
