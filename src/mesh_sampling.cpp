@@ -35,30 +35,6 @@ std::string MeshSampling::create_convex(const CloudT & cloud, const fs::path & o
     throw std::invalid_argument("create_convex: input cloud is empty.");
   }
 
-  char * buffer = nullptr;
-  size_t size = 0;
-  FILE * out_stream = open_memstream(&buffer, &size);
-
-  if(out_stream == nullptr)
-  {
-    throw std::runtime_error("create_convex: failed to open memory stream.");
-  }
-
-  // Create Qhull object
-  Qhull qhull;
-
-  std::ofstream ofs;
-  if(!out_path.empty()){
-    ofs.open(out_path.c_str());
-
-    if(!ofs.is_open())
-    {
-      throw std::invalid_argument("create_convex: could not open file :" + out_path.string());
-    }
-  }
-
-  qhull.qh()->fout = out_stream;
-
   // Convert PCL cloud to a flat array for Qhull input
   std::vector<double> qhull_input;
   qhull_input.reserve(cloud.size() * 3);
@@ -69,23 +45,34 @@ std::string MeshSampling::create_convex(const CloudT & cloud, const fs::path & o
     qhull_input.push_back(pt.z());
   }
 
+  // Use a native C++ stringstream to capture the output text
+  std::stringstream output_stream;
+  Qhull qhull;
+
+  // Tell Qhull where pipe outputQhull text data to our output_stream
+  // NOTE : qhull.outputQhull("o f") uses qhull.outputStream() (a C++ std::ostream), not the old C-style qh()->fout stream
+  qhull.setOutputStream(&output_stream);
+
   try
   {
-    qhull.runQhull("pcl_input", 3, cloud.size(), qhull_input.data(), "Qt"); // 3D, triangulate option
+    // Execute the Qhull pipeline
+    qhull.runQhull("pcl_input", 3, cloud.size(), qhull_input.data(), "Qt");
     qhull.outputQhull("o f");
   }
   catch(const std::exception & e)
   {
-    fclose(out_stream);
-    free(buffer);
     throw std::runtime_error(std::string("Qhull run failed: ") + e.what());
   }
 
-  fclose(out_stream);
-  std::string output(buffer, size);
-  free(buffer);
+  std::string output = output_stream.str();
 
+  // Write directly to file if path requested
   if (!out_path.empty()) {
+    std::ofstream ofs(out_path.c_str());
+    if(!ofs.is_open())
+    {
+      throw std::invalid_argument("create_convex: could not open file: " + out_path.string());
+    }
     ofs << output;
     std::cout << "Convex file saved to " << out_path << std::endl;
   }
