@@ -45,9 +45,44 @@ std::string MeshSampling::create_convex(const CloudT & cloud, const fs::path & o
     qhull_input.push_back(pt.z());
   }
 
+  Qhull qhull;
+
+  std::string output;
+  #ifdef QHULL_USE_OLD
+ char * buffer = nullptr;
+  size_t size = 0;
+  FILE * out_stream = open_memstream(&buffer, &size);
+
+  if(out_stream == nullptr)
+  {
+    throw std::runtime_error("create_convex: failed to open memory stream.");
+  }
+
+    qhull.qh()->fout = out_stream;
+  try
+  {
+    qhull.setErrorStream(&std::cerr);
+    qhull.runQhull("pcl_input", 3, cloud.size(), qhull_input.data(), "Qt"); // 3D, triangulate option
+    qhull.outputQhull("o f");
+  }
+  catch(const std::exception & e)
+  {
+    fclose(out_stream);
+    free(buffer);
+    throw std::runtime_error(std::string("Qhull run failed: ") + e.what());
+  }
+
+  fflush(out_stream);
+  fclose(out_stream);
+  if(buffer == nullptr || size <= 0) {
+    std::cout << "Buffer is empty or null.\n";
+    throw std::runtime_error("create_convex: Qhull did not produce any output");
+  }
+  output = std::string{buffer, size};
+  free(buffer);
+  #else
   // Use a native C++ stringstream to capture the output text
   std::stringstream output_stream;
-  Qhull qhull;
 
   // Tell Qhull where pipe outputQhull text data to our output_stream
   // NOTE : qhull.outputQhull("o f") uses qhull.outputStream() (a C++ std::ostream), not the old C-style qh()->fout stream
@@ -64,7 +99,8 @@ std::string MeshSampling::create_convex(const CloudT & cloud, const fs::path & o
     throw std::runtime_error(std::string("Qhull run failed: ") + e.what());
   }
 
-  std::string output = output_stream.str();
+  output = output_stream.str();
+  #endif
 
   // Write directly to file if path requested
   if (!out_path.empty()) {
