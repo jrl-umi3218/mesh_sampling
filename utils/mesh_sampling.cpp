@@ -23,9 +23,6 @@ int main(int argc, char ** argv)
   fs::path convex;
   app.add_option("--convex", convex, "Output convex directory")->check(CLI::ExistingPath);
 
-  bool use_qconvex = false;
-  app.add_flag("--use-qconvex", use_qconvex, "Use qconvex executable instead of libqhullcpp");
-
   unsigned int N;
   app.add_option("--samples", N, "Number of points to sample")->default_val(10000)->check(CLI::PositiveNumber);
 
@@ -69,23 +66,8 @@ int main(int argc, char ** argv)
   }
   else
   {
-    // Only these types are supported for convex generation
-    if(cloud_type == "xyz" || cloud_type == "xyz_rgb" || cloud_type == "xyz_normal" || cloud_type == "xyz_rgb_normal")
-    {
-      auto mesh = mesh_sampler.create_clouds(N, out, ".qc", binary_format);
-      if(!convex.empty())
-      {
-        if(use_qconvex)
-          mesh_sampler.create_convexes_qconvex(mesh, convex, true);
-        else
-          mesh_sampler.create_convexes(mesh, convex, true);
-      }
-    }
-    else
-    {
-      std::cerr << "Convex generation only supported for cloud types : xyz, xyz_rgb, xyz_normal, xyz_rgb_normal"
-                << std::endl;
-    }
+    auto mesh = mesh_sampler.create_clouds(N, out, ".qc", binary_format);
+    if(!convex.empty()) mesh_sampler.create_convexes(mesh, convex);
   }
   return 0;
 }
