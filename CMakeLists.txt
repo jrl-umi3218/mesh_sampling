@@ -9,6 +9,11 @@ set(PROJECT_DEBUG_POSTFIX "_d")
 set(CXX_DISABLE_WERROR 1)
 set(CMAKE_CXX_STANDARD 17)
 
+option(
+  USE_LEGACY_QHULL_STREAM
+  "Force use of legacy C open_memstream workaround for Qhull output to prevent symbol interposition crashes"
+  OFF)
+
 # Check if the submodule cmake have been initialized
 set(JRL_CMAKE_MODULES "${CMAKE_CURRENT_LIST_DIR}/cmake")
 if(EXISTS "${JRL_CMAKE_MODULES}/base.cmake")

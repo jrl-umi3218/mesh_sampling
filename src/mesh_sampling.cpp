@@ -18,14 +18,6 @@
 
 #include <mesh_sampling/qhull_io.h>
 
-// Compile-time check: If qh_QHpointer is 1, the environment supports safe multi-context isolation (Nix).
-// If it is 0 or undefined, we must use the legacy C-style memory stream to bypass the symbol conflict (Ubuntu).
-#if defined(qh_QHpointer) && qh_QHpointer == 1
-#define USE_LEGACY_QHULL_STREAM 0
-#else
-#define USE_LEGACY_QHULL_STREAM 1
-#endif
-
 namespace mesh_sampling
 {
 
@@ -54,7 +46,7 @@ std::string MeshSampling::create_convex(const CloudT & cloud, const fs::path & o
   orgQhull::Qhull qhull;
 
   std::string output;
-  #ifdef USE_LEGACY_QHULL_STREAM
+  #if USE_LEGACY_QHULL_STREAM
  char * buffer = nullptr;
   size_t size = 0;
   FILE * out_stream = open_memstream(&buffer, &size);
