@@ -1,7 +1,11 @@
 {
   description = "mesh-sampling: a tool and library to convert meshes to pointclouds / convex files";
 
-  inputs.mc-rtc-nix.url = "github:mc-rtc/nixpkgs";
+  inputs = {
+    mc-rtc-nix.url = "github:mc-rtc/nixpkgs";
+    flake-parts.follows = "mc-rtc-nix/flake-parts";
+    systems.follows = "mc-rtc-nix/systems";
+  };
 
   outputs =
     inputs:

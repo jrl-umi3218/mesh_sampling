@@ -1025,7 +1025,15 @@
     },
     "root": {
       "inputs": {
-        "mc-rtc-nix": "mc-rtc-nix"
+        "flake-parts": [
+          "mc-rtc-nix",
+          "flake-parts"
+        ],
+        "mc-rtc-nix": "mc-rtc-nix",
+        "systems": [
+          "mc-rtc-nix",
+          "systems"
+        ]
       }
     },
     "rosdistro": {
