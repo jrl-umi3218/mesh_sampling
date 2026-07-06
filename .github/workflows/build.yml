@@ -2,11 +2,14 @@ name: CI of mesh_sampling
 
 on:
   push:
-    branches:
-      - '**'
+    branches: [ master ]
   pull_request:
     branches:
       - '**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   clang-format:

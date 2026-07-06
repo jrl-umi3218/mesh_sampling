@@ -2,14 +2,15 @@ name: "CI - Nix"
 on:
   push:
     branches:
-      - devel
       - master
-      - main
   pull_request:
     branches:
-      - devel
       - master
-      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   nix:
     runs-on: "${{ matrix.os }}-latest"
