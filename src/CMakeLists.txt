@@ -1,8 +1,13 @@
 add_library(mesh_sampling SHARED mesh_sampling.cpp weighted_random_sampling.cpp)
 
-target_link_libraries(
-  mesh_sampling PUBLIC mesh_sampling::assimp Qhull::qhullcpp Qhull::qhull_r
-                       Eigen3::Eigen)
+target_link_libraries(mesh_sampling PUBLIC mesh_sampling::assimp Eigen3::Eigen)
+
+if(WIN32)
+  target_link_libraries(mesh_sampling PRIVATE Qhull::qhullcpp Qhull::qhullstatic_r)
+else()
+  target_link_libraries(mesh_sampling PRIVATE Qhull::qhullcpp Qhull::qhull_r)
+endif()
+
 
 target_include_directories(
   mesh_sampling PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
