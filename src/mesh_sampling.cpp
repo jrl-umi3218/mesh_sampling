@@ -201,7 +201,7 @@ CloudT MeshSampling::create_cloud(const aiScene * scene,
   if(!out_path.empty() && !fs::is_directory(out_path))
   {
     auto extension = out_path.extension().string();
-    bool success = io::saveQhullFile(out_path, *cloud);
+    bool success = io::saveQhullFile(out_path.string(), *cloud);
 
     if(!success)
     {
@@ -224,15 +224,15 @@ void MeshSampling::load(const fs::path & in_path, float scale)
     if(fs::is_directory(in_path))
     {
       for(const auto & dir_entry : std::filesystem::directory_iterator{in_path}){
-        if(check_supported(dir_entry.path().extension(), supported_extensions)){
+        if(check_supported(dir_entry.path().extension().string(), supported_extensions)){
           meshes_.insert(
-              std::make_pair(dir_entry.path(), std::make_shared<ASSIMPScene>(dir_entry.path(), scale)));
+              std::make_pair(dir_entry.path().string(), std::make_shared<ASSIMPScene>(dir_entry.path().string(), scale)));
         }
       }
     }
     else
     {
-      meshes_.insert(std::make_pair(in_path, std::make_shared<ASSIMPScene>(in_path, scale)));
+      meshes_.insert(std::make_pair(in_path.string(), std::make_shared<ASSIMPScene>(in_path.string(), scale)));
     }
   }
   catch(std::runtime_error & e)
@@ -244,7 +244,7 @@ void MeshSampling::load(const fs::path & in_path, float scale)
 
 void MeshSampling::convertTo(const fs::path & out_path, bool binary)
 {
-  for(auto & mesh : meshes_) mesh.second->exportScene(out_path, binary);
+  for(auto & mesh : meshes_) mesh.second->exportScene(out_path.string(), binary);
 }
 
 bool MeshSampling::check_supported(const std::string & type, const std::vector<std::string> & supported)
