@@ -50,9 +50,15 @@ public:
    * @param N number sampling points
    * @param out_path if empty or directory, file is not saved (default: {})
    * @param binary_mode is binary (default: false)
+   * @param scale per-axis scale of the mesh, such as the mesh scale of a URDF. A negative value mirrors the mesh
+   * (default: no scaling)
    * @return pcl::PointCloud<PointT>
    */
-  CloudT create_cloud(const aiScene * scene, unsigned N, const fs::path & out_path = {}, bool binary_mode = false);
+  CloudT create_cloud(const aiScene * scene,
+                      unsigned N,
+                      const fs::path & out_path = {},
+                      bool binary_mode = false,
+                      const Eigen::Vector3f & scale = Eigen::Vector3f::Ones());
 
   /**
    * @brief Create and save pointclouds, to be used when importing meshes from a directory. If out_path is empty clouds

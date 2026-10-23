@@ -193,10 +193,11 @@ CloudT MeshSampling::cloud(const unsigned N)
 CloudT MeshSampling::create_cloud(const aiScene * scene,
                                                          const unsigned N,
                                                          const fs::path & out_path,
-                                                         bool binary_mode)
+                                                         bool binary_mode,
+                                                         const Eigen::Vector3f & scale)
 {
   WeightedRandomSampling sampler(scene);
-  auto cloud = sampler.weighted_random_sampling(N);
+  auto cloud = sampler.weighted_random_sampling(N, scale);
 
   if(!out_path.empty() && !fs::is_directory(out_path))
   {
