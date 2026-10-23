@@ -195,36 +195,28 @@ public:
    * @param N Number of samples
    * If N = 0, then the the number of triangles in the scene will be used to
    * generate samples.
-   * @param scale Per-axis scale of the mesh. A negative value mirrors the mesh
-   *
    * @return Sampled pointcloud from scene
    */
-  std::unique_ptr<CloudT> weighted_random_sampling(const size_t N_samples = 0,
-                                                   const Eigen::Vector3f & scale = Eigen::Vector3f::Ones())
+  std::unique_ptr<CloudT> weighted_random_sampling(const size_t N_samples = 0)
   {
-    // A non-uniform scale changes the relative areas of the triangles, so they are weighted by their scaled area
-    const bool scaled = !scale.isOnes();
     std::vector<double> probabilities;
     probabilities.reserve(areas.size());
-    for(size_t i = 0; i < areas.size(); ++i)
+    double total = 0;
+    for(const auto & area : areas)
     {
-      const double area = scaled ? triangle_area(scale.cwiseProduct(v1_xyz[i]), scale.cwiseProduct(v2_xyz[i]),
-                                                 scale.cwiseProduct(v3_xyz[i]))
-                                 : areas[i];
-      probabilities.push_back(area);
+      total += area / total_area;
+      probabilities.push_back(area / total_area);
     }
 
     size_t N = N_samples;
     if(N_samples == 0) N = areas.size();
 
-    // std::discrete_distribution normalizes the weights
     const auto random_idx = weighted_random_choice_indices<int, double>(probabilities, N);
     std::unique_ptr<CloudT> cloud(new CloudT());
     cloud->reserve(static_cast<uint32_t>(N));
     for(const auto idx : random_idx)
     {
-      // The scale is linear: a point sampled in a triangle and then scaled is a point sampled in the scaled triangle
-      cloud->push_back(scale.cwiseProduct(random_point_in_triangle(v1_xyz[idx], v2_xyz[idx], v3_xyz[idx])));
+      cloud->push_back(random_point_in_triangle(v1_xyz[idx], v2_xyz[idx], v3_xyz[idx]));
     }
 
     return cloud;

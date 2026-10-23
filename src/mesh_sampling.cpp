@@ -21,7 +21,7 @@
 namespace mesh_sampling
 {
 
-MeshSampling::MeshSampling(const fs::path & in_path, float scale)
+MeshSampling::MeshSampling(const fs::path & in_path, const Eigen::Vector3f & scale)
 {
   load(in_path, scale);
 }
@@ -193,11 +193,10 @@ CloudT MeshSampling::cloud(const unsigned N)
 CloudT MeshSampling::create_cloud(const aiScene * scene,
                                                          const unsigned N,
                                                          const fs::path & out_path,
-                                                         bool binary_mode,
-                                                         const Eigen::Vector3f & scale)
+                                                         bool binary_mode)
 {
   WeightedRandomSampling sampler(scene);
-  auto cloud = sampler.weighted_random_sampling(N, scale);
+  auto cloud = sampler.weighted_random_sampling(N);
 
   if(!out_path.empty() && !fs::is_directory(out_path))
   {
@@ -218,8 +217,13 @@ CloudT MeshSampling::create_cloud(const aiScene * scene,
   return *cloud;
 }
 
-void MeshSampling::load(const fs::path & in_path, float scale)
+void MeshSampling::load(const fs::path & in_path, const Eigen::Vector3f & scale)
 {
+  if((scale.array() == 0.f).any())
+  {
+    throw std::invalid_argument("load: scale components must be non-zero.");
+  }
+
   try
   {
     if(fs::is_directory(in_path))

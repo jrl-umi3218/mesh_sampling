@@ -1,7 +1,9 @@
 #pragma once
 
+#include <Eigen/Core>
 #include <assimp/Exporter.hpp>
 #include <assimp/Importer.hpp>
+#include <assimp/config.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <filesystem>
@@ -18,10 +20,18 @@ struct ASSIMPScene
     loadScene();
   }
 
-  ASSIMPScene(const std::string & model_path, float scale) : modelPath_(model_path)
+  ASSIMPScene(const std::string & model_path, const Eigen::Vector3f & scale) : modelPath_(model_path)
   {
-    importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, scale);
-    loadScene();
+    aiMatrix4x4 transform;
+    transform.a1 = scale.x();
+    transform.b2 = scale.y();
+    transform.c3 = scale.z();
+
+    importer.SetPropertyBool(AI_CONFIG_PP_PTV_ADD_ROOT_TRANSFORMATION, true);
+    importer.SetPropertyMatrix(AI_CONFIG_PP_PTV_ROOT_TRANSFORMATION, transform);
+    importer.SetPropertyBool(AI_CONFIG_PP_PTV_KEEP_HIERARCHY, true);
+
+    loadScene(aiProcess_PreTransformVertices);
   }
 
   /**
@@ -60,11 +70,10 @@ struct ASSIMPScene
   }
 
 protected:
-  void loadScene()
+  void loadScene(unsigned int flags = 0)
   {
-    scene_ =
-        importer.ReadFile(modelPath_, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_GenNormals
-                                          | aiProcess_FixInfacingNormals | aiProcess_GlobalScale);
+    scene_ = importer.ReadFile(modelPath_, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices
+                                               | aiProcess_GenNormals | aiProcess_FixInfacingNormals | flags);
 
     // If the import failed, report it
     if(!scene_)

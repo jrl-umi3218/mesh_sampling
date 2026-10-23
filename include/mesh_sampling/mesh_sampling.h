@@ -22,16 +22,16 @@ class MeshSampling
 {
 public:
   MeshSampling() = default;
-  MeshSampling(const fs::path & in_path, float scale = 1);
+  MeshSampling(const fs::path & in_path, const Eigen::Vector3f & scale = Eigen::Vector3f::Ones());
   ~MeshSampling() = default;
 
   /**
    * @brief Load mesh from full path or directory
    *
    * @param in_path path or directory
-   * @param scale scaling factor (default: 1)
+   * @param scale per-axis scale applied to mesh vertices during import (default: no scaling)
    */
-  void load(const fs::path & in_path, float scale = 1);
+  void load(const fs::path & in_path, const Eigen::Vector3f & scale = Eigen::Vector3f::Ones());
 
   /**
    * @brief Create a cloud
@@ -50,15 +50,9 @@ public:
    * @param N number sampling points
    * @param out_path if empty or directory, file is not saved (default: {})
    * @param binary_mode is binary (default: false)
-   * @param scale per-axis scale of the mesh, such as the mesh scale of a URDF. A negative value mirrors the mesh
-   * (default: no scaling)
    * @return pcl::PointCloud<PointT>
    */
-  CloudT create_cloud(const aiScene * scene,
-                      unsigned N,
-                      const fs::path & out_path = {},
-                      bool binary_mode = false,
-                      const Eigen::Vector3f & scale = Eigen::Vector3f::Ones());
+  CloudT create_cloud(const aiScene * scene, unsigned N, const fs::path & out_path = {}, bool binary_mode = false);
 
   /**
    * @brief Create and save pointclouds, to be used when importing meshes from a directory. If out_path is empty clouds
