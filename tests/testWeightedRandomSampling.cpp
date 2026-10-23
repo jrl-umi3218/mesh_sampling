@@ -3,6 +3,7 @@
  */
 
 #include <algorithm>
+#include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <limits>
@@ -143,6 +144,17 @@ TEST(TestWeightedRandomSampling, RejectZeroScale)
 {
   const std::string model_path = PROJECT_SOURCE_DIR "/sample/suzanne.obj";
   EXPECT_THROW(MeshSampling(model_path, Eigen::Vector3f(1.f, 0.f, 1.f)), std::invalid_argument);
+}
+
+TEST(TestMeshSampling, CreateCloudFromSingleMeshPath)
+{
+  const std::filesystem::path model_path = PROJECT_SOURCE_DIR "/sample/suzanne.obj";
+  constexpr unsigned N = 1000;
+  MeshSampling sampler(model_path);
+
+  const auto cloud = sampler.create_cloud(model_path, N);
+
+  ASSERT_EQ(cloud.size(), N);
 }
 
 int main(int argc, char ** argv)

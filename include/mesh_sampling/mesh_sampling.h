@@ -22,6 +22,16 @@ class MeshSampling
 {
 public:
   MeshSampling() = default;
+  /**
+   * @brief Constructs a MeshSampling object from the given file path.
+   *
+   * Loads a mesh from the specified file and applies the given scale.
+   *
+   * @param in_path Path to the mesh file to load.
+   * @param scale Scaling factor to apply to the mesh (default: Eigen::Vector3f::Ones()).
+   *
+   * @throws std::runtime_error If the mesh loading fails.
+   */
   MeshSampling(const fs::path & in_path, const Eigen::Vector3f & scale = Eigen::Vector3f::Ones());
   ~MeshSampling() = default;
 
@@ -30,6 +40,7 @@ public:
    *
    * @param in_path path or directory
    * @param scale per-axis scale applied to mesh vertices during import (default: no scaling)
+   * @throws if the mesh cannot be loaded
    */
   void load(const fs::path & in_path, const Eigen::Vector3f & scale = Eigen::Vector3f::Ones());
 
@@ -41,6 +52,18 @@ public:
    * @return pcl::PointCloud<PointT>
    */
   CloudT cloud(const unsigned N = 2000);
+
+  /**
+   * @brief Create and save a pointcloud
+   *
+   * @tparam PointT
+   * @param mesh file path
+   * @param N number sampling points
+   * @param out_path if empty or directory, file is not saved (default: {})
+   * @param binary_mode is binary (default: false)
+   * @return pcl::PointCloud<PointT>
+   */
+  CloudT create_cloud(const fs::path & meshFile, unsigned N, const fs::path & out_path = {}, bool binary_mode = false);
 
   /**
    * @brief Create and save a pointcloud

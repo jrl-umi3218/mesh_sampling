@@ -190,6 +190,13 @@ CloudT MeshSampling::cloud(const unsigned N)
   return *cloud;
 }
 
+CloudT MeshSampling::create_cloud(const fs::path & meshFile, const unsigned N,
+                                                         const fs::path & out_path,
+                                                         bool binary_mode)
+{
+  return create_cloud(mesh(meshFile)->scene(), N, out_path, binary_mode);
+}
+
 CloudT MeshSampling::create_cloud(const aiScene * scene,
                                                          const unsigned N,
                                                          const fs::path & out_path,
@@ -224,26 +231,18 @@ void MeshSampling::load(const fs::path & in_path, const Eigen::Vector3f & scale)
     throw std::invalid_argument("load: scale components must be non-zero.");
   }
 
-  try
+  if(fs::is_directory(in_path))
   {
-    if(fs::is_directory(in_path))
-    {
-      for(const auto & dir_entry : std::filesystem::directory_iterator{in_path}){
-        if(check_supported(dir_entry.path().extension().string(), supported_extensions)){
-          meshes_.insert(
-              std::make_pair(dir_entry.path().string(), std::make_shared<ASSIMPScene>(dir_entry.path().string(), scale)));
-        }
+    for(const auto & dir_entry : std::filesystem::directory_iterator{in_path}){
+      if(check_supported(dir_entry.path().extension().string(), supported_extensions)){
+        meshes_.insert(
+            std::make_pair(dir_entry.path().string(), std::make_shared<ASSIMPScene>(dir_entry.path().string(), scale)));
       }
     }
-    else
-    {
-      meshes_.insert(std::make_pair(in_path.string(), std::make_shared<ASSIMPScene>(in_path.string(), scale)));
-    }
   }
-  catch(std::runtime_error & e)
+  else
   {
-    std::cerr << e.what() << std::endl;
-    return;
+    meshes_.insert(std::make_pair(in_path.string(), std::make_shared<ASSIMPScene>(in_path.string(), scale)));
   }
 }
 
@@ -260,10 +259,8 @@ bool MeshSampling::check_supported(const std::string & type, const std::vector<s
 }
 
 ASSIMPScene * MeshSampling::mesh(const std::string & path)
-  {
-    if(meshes_.count(path) > 0) return meshes_.begin()->second.get();
-
-    return nullptr;
-  }
+{
+  return meshes_.at(path).get();
+}
 
 } // namespace mesh_sampling
