@@ -32,6 +32,7 @@ struct ASSIMPScene
     importer.SetPropertyBool(AI_CONFIG_PP_PTV_KEEP_HIERARCHY, true);
 
     loadScene(aiProcess_PreTransformVertices);
+    correctNormalsForAssimp53x(scale);
   }
 
   /**
@@ -80,6 +81,33 @@ protected:
     {
       throw std::runtime_error(importer.GetErrorString());
     }
+  }
+
+  void correctNormalsForAssimp53x(const Eigen::Vector3f & scale)
+  {
+// ASSIMP version used in Ubuntu 24.04
+#if (ASSIMP_MAJOR == 5 && ASSIMP_MINOR == 3 && (ASSIMP_PATCH == 0 || ASSIMP_PATCH == 1))
+    // ASSIMP 5.3.[0|1]'s pre-transform step scales vertices but only normalizes existing normals.
+    for(unsigned int i = 0; i < scene_->mNumMeshes; ++i)
+    {
+      aiMesh * mesh = scene_->mMeshes[i];
+      if(!mesh->HasNormals())
+      {
+        continue;
+      }
+
+      for(unsigned int j = 0; j < mesh->mNumVertices; ++j)
+      {
+        aiVector3D normal = mesh->mNormals[j];
+        normal.x /= scale.x();
+        normal.y /= scale.y();
+        normal.z /= scale.z();
+        mesh->mNormals[j] = normal.Normalize();
+      }
+    }
+#else
+    (void)scale;
+#endif
   }
 
 protected:

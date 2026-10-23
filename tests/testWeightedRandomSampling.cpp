@@ -69,6 +69,8 @@ TEST(TestWeightedRandomSampling, Scale)
     const aiMesh * original_mesh = original.scene()->mMeshes[i];
     ASSERT_EQ(mesh->mNumVertices, original_mesh->mNumVertices);
     ASSERT_EQ(mesh->mNumFaces, original_mesh->mNumFaces);
+    ASSERT_TRUE(original_mesh->HasNormals());
+    ASSERT_TRUE(mesh->HasNormals());
 
     for(unsigned int j = 0; j < mesh->mNumVertices; ++j)
     {
