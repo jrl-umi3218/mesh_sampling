@@ -3,6 +3,7 @@
  */
 
 #include <CLI/CLI.hpp>
+#include <algorithm>
 #include <mesh_sampling/mesh_sampling.h>
 
 namespace fs = std::filesystem;
@@ -26,8 +27,11 @@ int main(int argc, char ** argv)
   unsigned int N;
   app.add_option("--samples", N, "Number of points to sample")->default_val(10000)->check(CLI::PositiveNumber);
 
-  float scale;
-  app.add_option("--scale", scale, "Scale factor applied to the mesh")->default_val(1.0)->check(CLI::Range(0, 1));
+  std::vector<float> scale{1.f, 1.f, 1.f};
+  app.add_option("--scale", scale, "Per-axis scale applied to the mesh")
+      ->delimiter(',')
+      ->expected(3)
+      ->default_val("1,1,1");
 
   std::string cloud_type = "xyz_rgb_normal";
   app.add_option("--type, -t", cloud_type, "Type of cloud to generate (xyz, xyz_rgb, xyz_rgb_normal)");
@@ -50,7 +54,13 @@ int main(int argc, char ** argv)
     return app.exit(CLI::CallForHelp());
   }
 
-  MeshSampling mesh_sampler(in);
+  if(std::any_of(scale.begin(), scale.end(), [](float component) { return component == 0.f; }))
+  {
+    std::cerr << "Error: --scale components must be non-zero\n";
+    return 1;
+  }
+
+  MeshSampling mesh_sampler(in, Eigen::Vector3f(scale[0], scale[1], scale[2]));
 
   if(!mesh_sampler.check_supported(cloud_type))
   {

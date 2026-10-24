@@ -1,7 +1,9 @@
 #pragma once
 
+#include <Eigen/Core>
 #include <assimp/Exporter.hpp>
 #include <assimp/Importer.hpp>
+#include <assimp/config.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <filesystem>
@@ -18,10 +20,19 @@ struct ASSIMPScene
     loadScene();
   }
 
-  ASSIMPScene(const std::string & model_path, float scale) : modelPath_(model_path)
+  ASSIMPScene(const std::string & model_path, const Eigen::Vector3f & scale) : modelPath_(model_path)
   {
-    importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, scale);
-    loadScene();
+    aiMatrix4x4 transform;
+    transform.a1 = scale.x();
+    transform.b2 = scale.y();
+    transform.c3 = scale.z();
+
+    importer.SetPropertyBool(AI_CONFIG_PP_PTV_ADD_ROOT_TRANSFORMATION, true);
+    importer.SetPropertyMatrix(AI_CONFIG_PP_PTV_ROOT_TRANSFORMATION, transform);
+    importer.SetPropertyBool(AI_CONFIG_PP_PTV_KEEP_HIERARCHY, true);
+
+    loadScene(aiProcess_PreTransformVertices);
+    correctNormalsForAssimp53x(scale);
   }
 
   /**
@@ -60,17 +71,43 @@ struct ASSIMPScene
   }
 
 protected:
-  void loadScene()
+  void loadScene(unsigned int flags = 0)
   {
-    scene_ =
-        importer.ReadFile(modelPath_, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_GenNormals
-                                          | aiProcess_FixInfacingNormals | aiProcess_GlobalScale);
+    scene_ = importer.ReadFile(modelPath_, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices
+                                               | aiProcess_GenNormals | aiProcess_FixInfacingNormals | flags);
 
     // If the import failed, report it
     if(!scene_)
     {
       throw std::runtime_error(importer.GetErrorString());
     }
+  }
+
+  void correctNormalsForAssimp53x(const Eigen::Vector3f & scale)
+  {
+// ASSIMP version used in Ubuntu 24.04
+#if (ASSIMP_MAJOR == 5 && ASSIMP_MINOR == 3 && (ASSIMP_PATCH == 0 || ASSIMP_PATCH == 1))
+    // ASSIMP 5.3.[0|1]'s pre-transform step scales vertices but only normalizes existing normals.
+    for(unsigned int i = 0; i < scene_->mNumMeshes; ++i)
+    {
+      aiMesh * mesh = scene_->mMeshes[i];
+      if(!mesh->HasNormals())
+      {
+        continue;
+      }
+
+      for(unsigned int j = 0; j < mesh->mNumVertices; ++j)
+      {
+        aiVector3D normal = mesh->mNormals[j];
+        normal.x /= scale.x();
+        normal.y /= scale.y();
+        normal.z /= scale.z();
+        mesh->mNormals[j] = normal.Normalize();
+      }
+    }
+#else
+    (void)scale;
+#endif
   }
 
 protected:

@@ -195,7 +195,6 @@ public:
    * @param N Number of samples
    * If N = 0, then the the number of triangles in the scene will be used to
    * generate samples.
-   *
    * @return Sampled pointcloud from scene
    */
   std::unique_ptr<CloudT> weighted_random_sampling(const size_t N_samples = 0)

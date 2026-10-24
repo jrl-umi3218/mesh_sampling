@@ -1,8 +1,8 @@
 compile_commands.json
 *.pyc
 build/
+build*
 .cache/
 .vscode/
 .direnv/
 result
-build

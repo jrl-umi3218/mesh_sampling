@@ -12,6 +12,7 @@
     inputs.mc-rtc-nix.lib.mkFlakoboros inputs (
       { lib, ... }:
       {
+        extraPackages = [ "ninja" ];
         overrideAttrs.mesh-sampling =
           { drv-prev, pkgs-final, ... }:
           {
@@ -20,7 +21,13 @@
               pkgs-final.cli11
               pkgs-final.jrl-cmakemodules
             ];
-            nativeBuildInputs = drv-prev.nativeBuildInputs ++ [ pkgs-final.gtest ];
+            nativeBuildInputs = drv-prev.nativeBuildInputs ++ [
+              pkgs-final.gtest
+              pkgs-final.ninja
+            ];
+            cmakeFlags = (drv-prev.cmakeFlags or [ ]) ++ [
+              "-GNinja"
+            ];
             doCheck = true;
             meta.mainProgram = "mesh_sampling";
           };

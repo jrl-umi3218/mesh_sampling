@@ -112,6 +112,10 @@ mesh_sampling --in /path/to/model.dae --out /tmp/cloud.pcd --type xyz_rgb_normal
 pcl_viewer /tmp/cloud.pcd -normals_scale 5 -normals 1
 ```
 
+Use `--scale=X,Y,Z` to apply a per-axis scale while importing a mesh. The transformation, including existing scene-node
+transforms, is baked into the mesh before sampling, conversion, or convex generation. Each component must be non-zero;
+an odd number of negative components mirrors the mesh while preserving face orientation.
+
 ### Generating convex files using qhull
 
 To generate convex files, you need to add `--convex` option to the command line. The convex file will be generated in the specified folder as `filename-ch.txt`.
