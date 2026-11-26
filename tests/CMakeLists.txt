@@ -6,6 +6,8 @@ macro(mesh_sampling_test NAME)
   target_link_libraries(${NAME} PUBLIC GTest::gtest ${ARGN})
   target_compile_definitions(
     ${NAME} PRIVATE -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+  # Always prefer the build folder library
+  target_link_options(${NAME} PRIVATE "LINKER:--disable-new-dtags")
   gtest_discover_tests(${NAME})
 endmacro()
 

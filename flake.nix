@@ -27,6 +27,7 @@
             ];
             cmakeFlags = (drv-prev.cmakeFlags or [ ]) ++ [
               "-GNinja"
+              (lib.cmakeBool "BUILD_TESTING" true)
             ];
             doCheck = true;
             meta.mainProgram = "mesh_sampling";
